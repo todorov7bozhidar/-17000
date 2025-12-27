@@ -1,0 +1,3650 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Под знака на Клио - Vive l'histoire</title>
+    
+    <!-- Добавяне на Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    
+    <style>
+        /* ===================== Общи стилове ===================== */
+        body {
+            margin: 0;
+            font-family: 'Georgia', serif;
+            background-color: #0a0a0a;
+            color: #f2f2f2;
+            overflow-x: hidden;
+            text-align: center;
+            padding-top: 0;
+        }
+        #iframe {
+            width: 100%;
+            height: 90vh;
+            border: none;
+            display: block;
+        }
+        #iframe img {
+            width: 100%;
+            height: auto;
+        }
+        header {
+            background: #b22222;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 1.8em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            font-style: italic;
+        }
+        header small {
+            font-size: 0.7em;
+            font-family: 'Georgia', serif;
+            letter-spacing: 2px;
+        }
+        /* ===================== Меню ===================== */
+        #menu-btn {
+            position: fixed;
+            top: 60px;
+            left: 15px;
+            background-color: #222;
+            border: 2px solid #444;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 20px;
+            z-index: 1000;
+        }
+        nav {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 300px;
+            height: 100vh;
+            background-color: #111;
+            border-right: 3px solid #900;
+            transition: left 0.3s;
+            padding-top: 70px;
+            z-index: 999;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #900 #111;
+        }
+        #profile-btn {
+            position: fixed;
+            top: 60px;
+            right: 15px;
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border-radius: 8px;
+            border: 2px solid #444;
+            background-color: #222;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        #profile-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        #profilePanel {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            width: 260px;
+            background: #111;
+            border: 2px solid #900;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            z-index: 2000;
+            box-shadow: 0 0 15px black;
+            display: none;
+        }
+        #profilePanel img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        nav::-webkit-scrollbar {
+            width: 8px;
+        }
+        nav::-webkit-scrollbar-track {
+            background: #111;
+        }
+        nav::-webkit-scrollbar-thumb {
+            background-color: #900;
+            border-radius: 10px;
+        }
+        nav.active { left: 0; }
+        nav button {
+            width: 85%;
+            margin: 8px auto;
+            display: block;
+            background-color: rgba(34,34,34,0.6);
+            color: #f2f2f2;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            background-image: url('Мърквичка.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.85;
+        }
+        nav button:hover { background-color: #900; }
+        .submenu { display: none; margin-left: 20px; }
+        .submenu button {
+            width: 75%;
+            background-color: #333;
+            margin: 6px auto;
+        }
+        /* ===================== Основно съдържание ===================== */
+        main {
+            text-align: center;
+            padding: 50px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #main-content {
+            background-image: url('Pierre_Mignard_001 (1).jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 12px;
+            padding: 60px 20px;
+            position: relative;
+            z-index: 1;
+        }
+        #main-content::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.55);
+            border-radius: 12px;
+            z-index: -1;
+        }
+        .quote { font-style: italic; font-size: 1.5em; margin-bottom: 10px; }
+        .question { margin-top: 30px; font-size: 1.1em; }
+        input[type="text"], input[type="password"] {
+            padding: 10px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            background-color: #111;
+            color: white;
+            width: 250px;
+            text-align: center;
+            margin: 5px;
+        }
+        select {
+            padding: 10px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            background-color: #111;
+            color: white;
+            width: 250px;
+            text-align: center;
+            margin: 5px;
+        }
+        button.submit {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: #006400;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        iframe {
+            width: 100%;
+            height: 80vh;
+            border: none;
+        }
+        /* ===================== Логин страница ===================== */
+        #startScreen, #loginForm {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: #0b0b0b;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        #startScreen h1 {
+            color: red;
+            font-size: 48px;
+            margin-bottom: 40px;
+        }
+        #startScreen .btn {
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 20px 60px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        #startScreen .btn:hover { background-color: #c30000; }
+        #loginForm input {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            width: 220px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .role-buttons button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 25px;
+            margin: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .teacherOnly {
+            display: none;
+        }
+        .role-buttons button.active { background-color: red; }
+        .role-buttons button:hover { background-color: #555; }
+        .error { color: red; margin-top: 15px; font-weight: bold; }
+        .menu { display: none; margin-top: 50px; }
+        .user-list {
+            display: none;
+            margin-top: 20px;
+            background-color: #1a1a1a;
+            border-radius: 15px;
+            padding: 20px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
+            font-size: 17px;
+            line-height: 1.7;
+            box-shadow: 0 0 10px #333;
+        }
+        /* ===================== Администраторски панел ===================== */
+        #adminPanel {
+            display: none;
+            margin-top: 40px;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #900;
+            text-align: left;
+        }
+        #adminPanel h2 {
+            color: #b22222;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .admin-section {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 3px solid #b22222;
+        }
+        .admin-section h3 {
+            color: #b22222;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        .admin-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .admin-row input, .admin-row select {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px;
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 5px;
+        }
+        .admin-btn {
+            background: #b22222 !important;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .admin-btn:hover {
+            background: #8b0000 !important;
+        }
+        .admin-btn.secondary {
+            background: #006400 !important;
+        }
+        .admin-btn.secondary:hover {
+            background: #008000 !important;
+        }
+        .admin-btn.danger {
+            background: #8b0000 !important;
+        }
+        .admin-btn.danger:hover {
+            background: #660000 !important;
+        }
+        #adminMessage {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .admin-message-success {
+            background: #006400;
+            color: lightgreen;
+        }
+        .admin-message-error {
+            background: #8b0000;
+            color: #ff6b6b;
+        }
+        /* Табове за администраторски панел */
+        .admin-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .admin-tab {
+            padding: 10px 15px;
+            background: #333;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            flex: 1;
+            min-width: 100px;
+        }
+        .admin-tab.active {
+            background: #b22222;
+        }
+        .admin-tab-content {
+            display: none;
+        }
+        .admin-tab-content.active {
+            display: block;
+        }
+        /* Стилове за управление на потребители */
+        .user-management {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .user-item {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-info {
+            flex: 1;
+        }
+        .user-actions {
+            display: flex;
+            gap: 5px;
+        }
+        /* Стилове за новите бутони */
+        .new-button {
+            background-color: #2c3e50 !important;
+            border-left: 4px solid #3498db !important;
+        }
+        .new-button:hover {
+            background-color: #34495e !important;
+        }
+        /* Стилове за файлов мениджър */
+        .file-manager {
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .file-item {
+            padding: 5px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+        }
+        /* Стилове за бутон "Потребители" */
+        #usersButton {
+            display: block !important;
+        }
+        
+        /* Стилове за редактори */
+        .editor-section {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .editor-section h3 {
+            color: #b22222;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        .editor-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .editor-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Georgia', serif;
+            font-size: 16px;
+            resize: vertical;
+        }
+        .editor-select {
+            flex: 1;
+            padding: 8px;
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 5px;
+        }
+        .content-preview {
+            background: #111;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .content-preview h3 {
+            color: #b22222;
+            margin-top: 0;
+        }
+        .content-preview img {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
+        }
+        /* Стилове за загрузване */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #b22222;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Стилове за качване на аватар */
+        .avatar-upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #b22222;
+        }
+        
+        /* Стилове за позициониране на бутони */
+        .position-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .position-input {
+            width: 60px;
+            text-align: center;
+        }
+        
+        /* ===================== НОВИ СТИЛОВЕ ЗА РЕЗЮМЕТА ===================== */
+        /* Грид система за 6 квадратчета */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Стилове за квадратчета */
+        .summary-box {
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid #b22222;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: left;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .summary-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(178, 34, 34, 0.3);
+        }
+        
+        .summary-box-header {
+            color: #b22222;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .summary-box-content {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            min-height: 80px;
+        }
+        
+        .summary-box-image {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #444;
+        }
+        
+        /* Стилове за редактора на резюмета */
+        .summary-editor {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .summary-box-editor {
+            background: rgba(34,34,34,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 3px solid #3498db;
+        }
+        
+        .summary-box-editor h4 {
+            color: #3498db;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .image-upload-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #444;
+        }
+        
+        /* Бутони за управление на резюмета */
+        .summary-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* Стилове за текущите бутони */
+        .current-buttons-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .button-item {
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 3px solid #b22222;
+        }
+        
+        .button-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .button-title {
+            font-weight: bold;
+            color: #f2f2f2;
+        }
+        
+        .button-info {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+        
+        .button-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+        }
+        
+        /* Стилове за преглед на резюмета */
+        .summary-preview {
+            background: #111;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .summary-preview h3 {
+            color: #b22222;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        /* Индикация за случаен въпрос */
+        .question-hint {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #aaa;
+            font-style: italic;
+        }
+        
+        /* Стилове за файлови прегледи */
+        .file-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .badge-pdf { background: #ff4444; color: white; }
+        .badge-word { background: #2b579a; color: white; }
+        .badge-ppt { background: #d24726; color: white; }
+        .badge-image { background: #4CAF50; color: white; }
+        .badge-text { background: #9C27B0; color: white; }
+        .badge-url { background: #FF9800; color: white; }
+    </style>
+</head>
+<body>
+    <!-- ===================== Черна стартова страница ===================== -->
+    <div id="startScreen">
+        <h1>Под знака на Клио</h1>
+        <button class="btn" onclick="showLogin()">ВХОД</button>
+    </div>
+
+    <!-- ===================== Форма за логин ===================== -->
+    <div id="loginForm" style="display:none;">
+        <input type="text" id="username" placeholder="Потребителско име"><br>
+        <input type="password" id="password" placeholder="Парола"><br>
+        <div class="role-buttons">
+            <button id="btnTeacher" onclick="setRole('Учител')">Учител</button>
+            <button id="btnStudent" onclick="setRole('Ученик')">Ученик</button>
+        </div>
+        <button class="btn" onclick="login()">Подай</button>
+        <div id="error" class="error"></div>
+    </div>
+
+    <!-- ===================== Основен сайт ===================== -->
+    <div id="siteContent" style="display:none;">
+        <button id="menu-btn">☰</button>
+        <button id="profile-btn">
+            <img id="profile-avatar" src="default.jpg" alt="profile">
+        </button>
+        <header>Под знака на Клио<br><small>Vive l'histoire</small></header>
+
+        <nav id="sidebar">
+            <button onclick="showHome()">Начало</button>
+            
+            <!-- НОВ БУТОН: Разширени планове -->
+            <button onclick="toggleSubmenu('expandedPlans')" class="new-button">Разширени планове</button>
+            <div id="expandedPlans" class="submenu">
+                <button onclick="showIframe('разширен_план_1.pdf')">Урок I - Разширен</button>
+                <button onclick="showIframe('разширен_план_2.pdf')">Урок II - Разширен</button>
+                <button onclick="showIframe('разширен_план_3.pdf')">Урок III - Разширен</button>
+            </div>
+            
+            <!-- НОВ БУТОН: Разработки по теми -->
+            <button onclick="toggleSubmenu('topicDevelopment')" class="new-button">Разработки по теми</button>
+            <div id="topicDevelopment" class="submenu">
+                <button onclick="showIframe('разработка_1.pdf')">Тема 1: Българско възраждане</button>
+                <button onclick="showIframe('разработка_2.pdf')">Тема 2: Национална революция</button>
+                <button onclick="showIframe('разработка_3.pdf')">Тема 3: Църковна борба</button>
+            </div>
+            
+            <button onclick="toggleSubmenu('plan')">Резюмета</button>
+            <div id="plan" class="submenu">
+                <button onclick="showSummary('les1')">Урок I</button>
+                <button onclick="showSummary('les2')">Урок II</button>
+                <button onclick="showSummary('les3')">Урок III</button>
+                <button onclick="showSummary('les4')">Урок IV</button>
+                <button onclick="showIframe('05. Светът на възрожденските българи.pdf')">Урок V</button>
+                <button onclick="showSummary('les6')">Урок VI</button>
+                <button onclick="showSummary('les7')">Урок VII</button>
+                <button onclick="showSummary('les8')">Урок VIII</button>
+                <button onclick="showSummary('les9')">Урок IX</button>
+                <button onclick="showSummary('les10')">Урок X</button>
+            </div>
+
+            <button onclick="toggleSubmenu('conspects')">План-конспекти</button>
+            <div id="conspects" class="submenu">
+                <button onclick="openEFrame('Урок1ти.jpg')">Урок I</button>
+                <button onclick="openEFrame('Хронос1.jpg')">Дати към Урок I</button>
+                <button onclick="openEFrame('Урок2ти.jpg')">Урок II</button>
+                <button onclick="openEFrame('Хронос2.jpg')">Дати към Урок II</button>
+                <button onclick="openEFrame('Урок3ти.jpg')">Урок III</button>
+                <button onclick="openEFrame('Хронос.jpg')">Дати към Урок III</button>
+                <button onclick="openEFrame('Урок4ти.jpg')">Урок IV</button>
+                <button onclick="openEFrame('Хронос4.jpg')">Дати към Урок IV</button>
+            </div>
+
+            <button onclick="toggleSubmenu('textbooks')">Учебници</button>
+            <div id="textbooks" class="submenu">
+                <button onclick="openEFrame('https://ebooks.presveta.bg/7klas')">Просвета VII</button>
+                <button onclick="openEFrame('https://sales.anubis-bulvest.com/epub/textbooks/b7ist/index.html?page=1')">Булвест VII</button>
+                <button onclick="openEFrame('https://sales.anubis-bulvest.com/epub/textbooks/a7ist/index.html?page=1')">Анубис VII</button>
+                <button onclick="window.open('https://ebook.domino.bg/books/10/istoria/#page=1', '_blank')">Домино X</button>
+                <button onclick="openEFrame('https://uchebnicite.bg/7-%D0%BA%D0%BB%D0%B0%D1%81/%D0%B8%D1%81%D1%82%D0%BE%D1%80%D0%B8%D1%8F-7-%D0%BA%D0%BB%D0%B0%D1%81/')">Рива VII</button>
+                <button onclick="window.open('https://ebook.domino.bg/books/7/atlas/istoria/#page=7', '_blank')">Домино Атлас VII</button>
+                <button onclick="openEFrame('https://uchebnicite.bg/10-%D0%BA%D0%BB%D0%B0%D1%81/%D0%B8%D1%81%D1%82%D0%BE%D1%80%D0%B8%D1%8F-10-%D0%BA%D0%BB%D0%B0%D1%81/')">Рива X</button>
+            </div>
+
+            <button onclick="toggleSubmenu('notebooks')">Учебни пособия</button>
+            <div id="notebooks" class="submenu">
+                <button onclick="toggleSubmenu('atlas')">Атлас</button>
+                <div id="atlas" class="submenu">
+                    <button onclick="showIframe('Османска.jpg')">Карта на Османската империя</button>
+                    <button onclick="showIframe('Великитесили1.jpg')">Карта на Европа през втората половина на XVIII век</button>
+                    <!-- ... останалите бутони ... -->
+                </div>
+                <button onclick="toggleSubmenu('pomagala')">Тестове по история и цивилизации за VII клас</button>
+                <div id="pomagala" class="submenu">
+                    <button onclick="showIframe('С67.jpg')">Страници 6 и 7</button>
+                    <button onclick="showIframe('С89.jpg')">Страници 8 и 9</button>
+                    <button onclick="showIframe('С1011.jpg')">Страници 10 и 11</button>
+                    <button onclick="showIframe('С1213.jpg')">Страници 12 и 13</button>
+                    <button onclick="showIframe('С1415.jpg')">Страници 14 и 15</button>
+                    <button onclick="showIframe('С1617.jpg')">Страници 16 и 17</button>
+                    <button onclick="showIframe('С1819.jpg')">Страници 18 и 19</button>
+                    <button class="teacherOnly" onclick="loadAnswers7()">Отговори на тестовете</button>
+                </div>
+                <button onclick="toggleSubmenu('sbornici')">Учебна тетрадка ("Просвета Плюс")</button>
+                <div id="sbornici" class="submenu">
+                    <button onclick="showIframe('УТ12.jpg')">Упражнения върху I и II урок</button>
+                    <button onclick="showIframe('УТ34.jpg')">Упражнения върху III и IV урок</button>
+                    <button onclick="showIframe('УТ56.jpg')">Упражнения върху V и VI урок</button>
+                    <button onclick="showIframe('УТ78.jpg')">Упражнения върху VII и VIII урок</button>
+                    <button onclick="showIframe('УТ910.jpg')">Упражнения върху IX и X урок</button>
+                    <button onclick="showIframe('УТ1112.jpg')">Упражнения върху XI и XII урок</button>
+                    <button onclick="showIframe('ОБ.jpg')">Обобщителен тест</button>
+                </div>
+            </div>
+
+            <button onclick="toggleSubmenu('olympiads')">Олимпиади</button>
+            <div id="olympiads" class="submenu">
+                <button onclick="openEFrame('https://docs.google.com/gview?url=https://www.regalia6.com/olimpiads/olimpiads_files/history/2010/ob6tinski/pazardjik/ist6kl.pdf&embedded=true')">Общински кръг 2010, 6 кл. (VII)</button>
+                <button onclick="openEFrame('olimpyada2.html')">Областен кръг 2011, 6 кл. (VII)</button>
+            </div>
+
+            <button onclick="showIframe('Geschichte.html')">Упражнение Олимпия</button>
+            <button onclick="showIframe('Личности.html')">Упражнение Елегия</button>
+            <button onclick="showIframe('Лауреат2.html')">Упражнение Лауреат</button>
+            <button onclick="showIframe('Вестник.jpg')">Списък на възрожденската преса</button>
+            <button onclick="showLiterature()">Препоръчителна литература</button>
+            <button onclick="showCreators()">За създателите</button>
+
+            <!-- ===================== ДОБАВЕН НОВ БЛОК ===================== -->
+            <button onclick="toggleSubmenu('extras')">Допълнително</button>
+            <div id="extras" class="submenu">
+                <button onclick="showIframe('Понятия4.html')">Понятия</button>
+                <!-- НОВО: два датника за независимостите -->
+                <button onclick="toggleSubmenu('independence')">Исторически датници</button>
+                <div id="independence" class="submenu">
+                    <button onclick="showIframe('Църква.jpg')">Датник — Борба за църковна независимост</button>
+                    <button onclick="showIframe('Революция.jpg')">Датник — Борба за държавна самостоятелност</button>
+                </div>
+                <!-- НОВО: Подбрани статии от Българска история -->
+                <button onclick="toggleSubmenu('bhistory')">Подбрани статии от "Българска история"</button>
+                <div id="bhistory" class="submenu">
+                    <button onclick="openEFrame('https://bulgarianhistory.org/misiyata-kaulbars/')">Каулбарс I</button>
+                    <!-- ... останалите бутони ... -->
+                </div>
+                <button onclick="toggleSubmenu('lichnosty')">Портрети на личности</button>
+                <div id="lichnosty" class="submenu">
+                    <button onclick="openEFrame('паисий.jpg')">Портрет на Паисий Хилендарски</button>
+                    <!-- ... останалите бутони ... -->
+                </div>
+            </div>
+            <!-- ===================== КРАЙ НА ДОБАВКАТА ===================== -->
+            <button onclick="showAdvice()">Съвети за олимпиадата</button>
+            <button onclick="showUsers()" id="usersButton">Потребители</button>
+        </nav>
+
+        <main id="content">
+            <!-- Начална страница с случаен въпрос -->
+            <div id="main-content">
+                <p class="quote">„Историята помни само победителите."<br>— Наполеон Бонапарт, император на Франция</p>
+                <p class="question" id="questionText">Въпросът ще се зареди...</p>
+                <input type="text" id="answer" placeholder="Въведи отговора">
+                <button class="submit" onclick="checkAnswer()">Подай своя отговор</button>
+                <div class="question-hint">
+                    💡 Всеки път се появява различен въпрос. След правилен отговор ще се появи нов.
+                </div>
+            </div>
+
+            <!-- Страница за резюмета (6 квадратчета) -->
+            <div id="summary-container" style="display:none;">
+                <h2 id="summary-title" style="text-align:center; margin-bottom: 30px;">Резюме на Урок</h2>
+                <div class="summary-grid" id="summary-grid">
+                    <!-- 6 квадратчета ще се генерират тук динамично -->
+                </div>
+            </div>
+
+            <!-- Останалите секции -->
+            <div id="creators" style="display:none; line-height:1.6;">
+                <h2 style="text-align:center;">За създателите</h2>
+                <!-- Съдържанието остава същото -->
+            </div>
+
+            <div id="literature" style="display:none;">
+                <h2>Препоръчителна литература</h2>
+                <!-- Съдържанието остава същото -->
+            </div>
+
+            <div id="advice" style="display:none; text-align:left; line-height:1.6;">
+                <h2 style="text-align:center;">Възвание, до изгубилите своя плам</h2>
+                <!-- Съдържанието остава същото -->
+            </div>
+
+            <div id="iframe-container" style="display:none;">
+                <iframe id="iframe"></iframe>
+            </div>
+
+            <!-- ======= АДМИН ПАНЕЛ ======= -->
+            <div id="adminPanel">
+                <h2>Администраторски панел</h2>
+                
+                <!-- Табове -->
+                <div class="admin-tabs">
+                    <button class="admin-tab active" onclick="switchAdminTab('buttons')">Бутони</button>
+                    <button class="admin-tab" onclick="switchAdminTab('files')">Файлове</button>
+                    <button class="admin-tab" onclick="switchAdminTab('users')">Потребители</button>
+                    <button class="admin-tab" onclick="switchAdminTab('styles')">Стилове</button>
+                    <button class="admin-tab" onclick="switchAdminTab('questions')">Въпроси</button>
+                    <button class="admin-tab" onclick="switchAdminTab('editors')">Редактори</button>
+                    <button class="admin-tab" onclick="switchAdminTab('debug')">Debug</button>
+                </div>
+                
+                <!-- Управление на бутони -->
+                <div id="admin-buttons" class="admin-tab-content active">
+                    <div class="admin-section">
+                        <h3>Добавяне на нов бутон</h3>
+                        <div class="admin-row">
+                            <input type="text" id="newButtonName" placeholder="Име на бутона">
+                            <select id="buttonType">
+                                <option value="main">Основен бутон</option>
+                                <option value="sub">Подбутон</option>
+                            </select>
+                        </div>
+                        <div class="admin-row">
+                            <select id="parentMenu">
+                                <option value="">Избери родителско меню</option>
+                                <option value="sidebar">Основно меню (в начало)</option>
+                                <option value="plan">Резюмета</option>
+                                <option value="expandedPlans">Разширени планове</option>
+                                <option value="topicDevelopment">Разработки по теми</option>
+                                <option value="conspects">План-конспекти</option>
+                                <option value="textbooks">Учебници</option>
+                                <option value="notebooks">Учебни пособия</option>
+                                <option value="olympiads">Олимпиади</option>
+                                <option value="extras">Допълнително</option>
+                                <!-- Всички останали подменюта -->
+                                <option value="atlas">Атлас</option>
+                                <option value="pomagala">Тестове</option>
+                                <option value="sbornici">Учебна тетрадка</option>
+                                <option value="independence">Исторически датници</option>
+                                <option value="bhistory">Българска история</option>
+                                <option value="lichnosty">Портрети</option>
+                            </select>
+                        </div>
+                        <div class="admin-row position-controls">
+                            <label style="color: white;">Позиция:</label>
+                            <input type="number" id="buttonPosition" class="position-input" placeholder="1" min="1">
+                            <small style="color: #aaa;">(празно = в края)</small>
+                        </div>
+                        <div class="admin-row">
+                            <input type="text" id="buttonLink" placeholder="Линк (ако има)">
+                            <button class="admin-btn" onclick="addButtonAsLink()">Добави като линк</button>
+                        </div>
+                        <div class="admin-row">
+                            <input type="file" id="buttonFile" style="display: none;" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.txt,.html">
+                            <button class="admin-btn secondary" onclick="document.getElementById('buttonFile').click()">Избери файл</button>
+                            <button class="admin-btn secondary" onclick="addButtonAsFile()">Добави като файл</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>ВСИЧКИ бутони (може да се редактират и трият)</h3>
+                        <div class="current-buttons-container" id="allButtonsList">
+                            <!-- Всички бутони ще се показват тук -->
+                        </div>
+                        <div class="admin-row summary-controls">
+                            <button class="admin-btn danger" onclick="deleteAllCustomButtons()">Изтрий всички добавени бутони</button>
+                            <button class="admin-btn secondary" onclick="refreshButtonsList()">Обнови списъка</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Управление на файлове -->
+                <div id="admin-files" class="admin-tab-content">
+                    <div class="admin-section">
+                        <h3>Качване на файлове (ще се отварят в iframe)</h3>
+                        <div class="admin-row">
+                            <input type="file" id="fileUpload" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.txt,.html">
+                            <button class="admin-btn" onclick="uploadFiles()">Качи файлове</button>
+                        </div>
+                        <div class="admin-row">
+                            <input type="text" id="fileUrl" placeholder="URL на файл">
+                            <button class="admin-btn secondary" onclick="addFileFromUrl()">Добави от URL</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>Файлов мениджър (качените файлове се запазват във Firebase)</h3>
+                        <div class="file-manager">
+                            <div class="file-list" id="fileList">
+                                <!-- Файловете ще се показват тук -->
+                            </div>
+                            <button class="admin-btn danger" onclick="clearAllFiles()">Изтрий всички файлове</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Управление на потребители -->
+                <div id="admin-users" class="admin-tab-content">
+                    <div class="admin-section">
+                        <h3>Добавяне на нов потребител</h3>
+                        <div class="admin-row">
+                            <input type="text" id="newUserName" placeholder="Пълно име (Име, Фамилия)">
+                            <input type="text" id="newUserDisplayName" placeholder="Потребителско име">
+                        </div>
+                        <div class="admin-row">
+                            <input type="password" id="newUserPassword" placeholder="Парола">
+                            <select id="newUserRole">
+                                <option value="Ученик">Ученик</option>
+                                <option value="Учител">Учител</option>
+                            </select>
+                        </div>
+                        <div class="admin-row">
+                            <div class="avatar-upload-container">
+                                <img id="newUserAvatarPreview" src="default.jpg" class="avatar-preview" alt="Аватар">
+                                <input type="file" id="newUserAvatarFile" accept="image/*" style="display: none;" onchange="previewNewUserAvatar(event)">
+                                <button class="admin-btn secondary" onclick="document.getElementById('newUserAvatarFile').click()">Избери аватар</button>
+                                <small>Или въведи URL: <input type="text" id="newUserAvatarUrl" placeholder="URL на аватар" style="width: 100%; margin-top: 5px;"></small>
+                            </div>
+                        </div>
+                        <div class="admin-row">
+                            <textarea id="newUserBio" placeholder="Биография" rows="3" style="width: 100%; background: #222; color: white; padding: 8px; border-radius: 5px;"></textarea>
+                        </div>
+                        <div class="admin-row">
+                            <label style="color: white; display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="newUserIsAdmin"> Администратор
+                            </label>
+                            <button class="admin-btn" onclick="addNewUser()">Добави потребител</button>
+                            <button class="admin-btn secondary" onclick="fixFirebaseUsers()">Поправи Firebase</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>Управление на потребители (може да се редактират всички полета)</h3>
+                        <div class="user-management" id="userManagement">
+                            <!-- Потребителите ще се показват тук -->
+                        </div>
+                        <div class="admin-row">
+                            <button class="admin-btn danger" onclick="removeSelectedUsers()">Премахни избраните</button>
+                            <button class="admin-btn secondary" onclick="exportUsers()">Експортирай потребители</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>Масово добавяне на потребители</h3>
+                        <div class="admin-row">
+                            <textarea id="bulkUsers" placeholder="Въведи потребители (по един на ред):&#10;Име, Фамилия, Потребителско име, Парола, Роля, Аватар(по избор), Биография(по избор)" rows="4" style="width: 100%; background: #222; color: white; padding: 10px;"></textarea>
+                        </div>
+                        <div class="admin-row">
+                            <button class="admin-btn" onclick="addBulkUsers()">Добави всички</button>
+                            <button class="admin-btn secondary" onclick="generateRandomUsers()">Генерирай случайни</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Управление на стилове -->
+                <div id="admin-styles" class="admin-tab-content">
+                    <div class="admin-section">
+                        <h3>Промяна на цветове</h3>
+                        <div class="admin-row">
+                            <label style="color: white;">Цвят на бутоните:</label>
+                            <input type="color" id="buttonColor" value="#222222">
+                            <label style="color: white;">Цвят при задържане:</label>
+                            <input type="color" id="buttonHoverColor" value="#900000">
+                        </div>
+                        <div class="admin-row">
+                            <label style="color: white;">Цвят на граници:</label>
+                            <input type="color" id="borderColor" value="#b22222">
+                            <button class="admin-btn" onclick="updateColors()">Приложи цветове</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>Промяна на фонове</h3>
+                        <div class="admin-row">
+                            <input type="text" id="bgImageUrl" placeholder="URL на фоново изображение" value="Pierre_Mignard_001 (1).jpg">
+                            <button class="admin-btn" onclick="updateBackground()">Промени фон</button>
+                        </div>
+                        <div class="admin-row">
+                            <input type="file" id="bgImageUpload" accept="image/*" style="display: none;">
+                            <button class="admin-btn secondary" onclick="document.getElementById('bgImageUpload').click()">Качи собствено изображение</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>Промяна на шрифтове</h3>
+                        <div class="admin-row">
+                            <select id="fontFamily">
+                                <option value="Georgia">Georgia</option>
+                                <option value="'Times New Roman'">Times New Roman</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Verdana">Verdana</option>
+                            </select>
+                            <button class="admin-btn" onclick="updateFont()">Промени шрифт</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Управление на въпроси -->
+                <div id="admin-questions" class="admin-tab-content">
+                    <div class="admin-section">
+                        <h3>Добавяне на нов въпрос (за начална страница)</h3>
+                        <div class="admin-row">
+                            <textarea id="newQuestion" placeholder="Текст на въпроса" rows="3" style="width: 100%; background: #222; color: white; padding: 10px;"></textarea>
+                        </div>
+                        <div class="admin-row">
+                            <input type="text" id="newAnswer" placeholder="Верен отговор">
+                            <button class="admin-btn" onclick="addNewQuestion()">Добави въпрос</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>Текущи въпроси - ВСИЧКИ СЕ ЗАПАЗВАТ ВЪВ FIREBASE</h3>
+                        <div id="questionsList" style="max-height: 300px; overflow-y: auto; border: 1px solid #444; padding: 10px;">
+                            <!-- Въпросите ще се показват тук -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Редактори за съдържание -->
+                <div id="admin-editors" class="admin-tab-content">
+                    <div class="editor-section">
+                        <h3>Редактиране на резюмета (6 квадратчета)</h3>
+                        <div class="admin-row">
+                            <select id="lessonSelect" class="editor-select" onchange="loadSummaryForEdit()">
+                                <option value="">Избери урок</option>
+                                <option value="les1">Урок I</option>
+                                <option value="les2">Урок II</option>
+                                <option value="les3">Урок III</option>
+                                <option value="les4">Урок IV</option>
+                                <option value="les5">Урок V</option>
+                                <option value="les6">Урок VI</option>
+                                <option value="les7">Урок VII</option>
+                                <option value="les8">Урок VIII</option>
+                                <option value="les9">Урок IX</option>
+                                <option value="les10">Урок X</option>
+                            </select>
+                            <button class="admin-btn" onclick="loadSummaryForEdit()">Зареди урок</button>
+                        </div>
+                        
+                        <div id="summary-editor-container" style="display: none;">
+                            <div class="summary-editor">
+                                <h4 style="color: #b22222; text-align: center; margin-bottom: 20px;">Редактиране на 6-те квадратчета</h4>
+                                
+                                <div id="summary-boxes-editor">
+                                    <!-- 6 редактора за квадратчетата ще се генерират тук -->
+                                </div>
+                                
+                                <div class="summary-controls">
+                                    <button class="admin-btn" onclick="saveSummary()">💾 Запази резюмета</button>
+                                    <button class="admin-btn secondary" onclick="previewSummary()">👁️ Преглед</button>
+                                    <button class="admin-btn danger" onclick="clearSummary()">🗑️ Изчисти всички</button>
+                                </div>
+                            </div>
+                            
+                            <div id="summary-preview-container" class="summary-preview" style="display: none;">
+                                <h3>Преглед на резюметата</h3>
+                                <div id="summary-preview-grid" class="summary-grid">
+                                    <!-- Преглед ще се показва тук -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="editor-section">
+                        <h3>Редактиране на "За създателите"</h3>
+                        <div class="admin-row">
+                            <textarea id="creatorsContent" class="editor-textarea" placeholder="Съдържание на страницата 'За създателите'..."></textarea>
+                        </div>
+                        <div class="admin-row">
+                            <button class="admin-btn" onclick="saveCreatorsContent()">Запази "За създателите"</button>
+                            <button class="admin-btn secondary" onclick="loadCreatorsContent()">Зареди текущо</button>
+                        </div>
+                    </div>
+                    
+                    <div class="editor-section">
+                        <h3>Редактиране на "Препоръчителна литература"</h3>
+                        <div class="admin-row">
+                            <textarea id="literatureContent" class="editor-textarea" placeholder="Съдържание на страницата 'Препоръчителна литература'..."></textarea>
+                        </div>
+                        <div class="admin-row">
+                            <button class="admin-btn" onclick="saveLiteratureContent()">Запази литература</button>
+                            <button class="admin-btn secondary" onclick="loadLiteratureContent()">Зареди текущо</button>
+                        </div>
+                    </div>
+                    
+                    <div class="editor-section">
+                        <h3>Редактиране на "Съвети за олимпиадата"</h3>
+                        <div class="admin-row">
+                            <textarea id="adviceContent" class="editor-textarea" placeholder="Съдържание на страницата 'Съвети за олимпиадата'..."></textarea>
+                        </div>
+                        <div class="admin-row">
+                            <button class="admin-btn" onclick="saveAdviceContent()">Запази съвети</button>
+                            <button class="admin-btn secondary" onclick="loadAdviceContent()">Зареди текущо</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Debug панел -->
+                <div id="admin-debug" class="admin-tab-content">
+                    <div class="admin-section">
+                        <h3>Debug информация</h3>
+                        <div class="admin-row">
+                            <button class="admin-btn secondary" onclick="checkFirebaseStructure()">Провери Firebase структура</button>
+                            <button class="admin-btn secondary" onclick="debugFirebase()">Debug Firebase</button>
+                            <button class="admin-btn danger" onclick="clearAllLocalStorage()">Изчисти LocalStorage</button>
+                            <button class="admin-btn" onclick="forceSaveAllData()">Принудително запази всички данни</button>
+                        </div>
+                        <div class="admin-row">
+                            <div id="debugOutput" style="width: 100%; min-height: 200px; background: #111; color: #0f0; padding: 10px; border-radius: 5px; font-family: monospace; overflow-y: auto; max-height: 300px;">
+                                Debug информация ще се покаже тук...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="adminMessage"></div>
+            </div>
+
+            <div id="userList" class="user-list"></div>
+        </main>
+
+        <div id="profilePanel">
+            <img id="panelAvatar">
+            <h3 id="panelName"></h3>
+            <p id="panelRole"></p>
+            <p id="panelPass"></p>
+            <p id="panelBio"></p>
+            <button onclick="logout()" style="background: #b22222; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 100%;">Изход</button>
+        </div>
+    </div>
+
+<script>
+// ===================== FIREBASE КОНФИГУРАЦИЯ =====================
+const firebaseConfig = {
+    apiKey: "AIzaSyCeXUqC1wVU2x59-KdVN6fiKh11n5kLjtQ",
+    authDomain: "project-4244856981657410267.firebaseapp.com",
+    projectId: "project-4244856981657410267",
+    storageBucket: "project-4244856981657410267.firebasestorage.app",
+    messagingSenderId: "114315538562",
+    appId: "1:114315538562:web:d099184607d6b04fe6c49b"
+};
+
+// Инициализиране на Firebase
+let db;
+let storage;
+let isOnline = false;
+
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    storage = firebase.storage();
+    isOnline = true;
+    console.log("✅ Firebase инициализиран успешно!");
+} catch (error) {
+    console.error("❌ Грешка при инициализиране на Firebase:", error);
+    isOnline = false;
+}
+
+// ===================== ГЛОБАЛНИ ПРОМЕНЛИВИ =====================
+let currentUser = null;
+let selectedRole = "";
+let allUsers = [];
+let questions = [];
+let uploadedFiles = [];
+let customButtons = [];
+let editingUser = null;
+let currentQuestion = null;
+let currentSummary = null;
+let allSiteButtons = [];
+
+// НАЧАЛНИ ПОТРЕБИТЕЛИ
+const initialUsers = [
+    {
+        name: "Тодоров, Божидар",
+        displayName: "Божидар Тодоров",
+        role: "Учител",
+        password: "BT2345",
+        avatar: "bozhidar2.jpg",
+        bio: "Създател на 'Под знака на Клио'. Лауреат на НОИ от националния кръг във Варна.",
+        isAdmin: true
+    },
+    {
+        name: "Терпо, Янилия",
+        displayName: "Янилия Терпо",
+        role: "Учител",
+        password: "QT0123",
+        avatar: "QT.jpg",
+        bio: "Ученик в IX 'а' клас на ППМГ 'Акад. Н. Обрешков', изявен хуманитарист с високи постижения в историческата наука.",
+        isAdmin: false
+    },
+    {
+        name: "Русинова, Димитрина",
+        displayName: "Димитрина Русинова",
+        role: "Учител",
+        password: "DR1234",
+        avatar: "DR3.jpg",
+        bio: "Дългогодишен преподавател в ППМГ 'Акад. Н. Обрешков'. Създала е най-успешните олимпийци на гимназията по история.",
+        isAdmin: false
+    },
+    {
+        name: "Попова, Алиса",
+        displayName: "Алиса Попова",
+        role: "Учител",
+        password: "AP0012",
+        avatar: "Alis3.jpg",
+        bio: "Преподавател по ИТ в ППМГ 'Акад. Н. Обрешков'.",
+        isAdmin: false
+    }
+];
+
+// Начални въпроси
+const initialQuestions = [
+    {
+        id: 1,
+        text: "При откриването на коя сграда княз Фердинанд е освиркан от студенти?",
+        answer: "народния театър",
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: 2,
+        text: "Кой е автор на 'История славянобългарска'?",
+        answer: "Паисий Хилендарски",
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: 3,
+        text: "Кога е Априлското въстание?",
+        answer: "1876",
+        createdAt: new Date().toISOString()
+    }
+];
+
+// Начални резюмета (6 квадратчета)
+const initialSummaries = {
+    les1: {
+        title: "Резюме на Урок I",
+        boxes: [
+            { title: "Заглавие 1", content: "Съдържание на първия квадрат...", image: "" },
+            { title: "Заглавие 2", content: "Съдържание на втория квадрат...", image: "" },
+            { title: "Заглавие 3", content: "Съдържание на третия квадрат...", image: "" },
+            { title: "Заглавие 4", content: "Съдържание на четвъртия квадрат...", image: "" },
+            { title: "Заглавие 5", content: "Съдържание на петия квадрат...", image: "" },
+            { title: "Заглавие 6", content: "Съдържание на шестия квадрат...", image: "" }
+        ]
+    }
+};
+
+// ===================== ИНИЦИАЛИЗАЦИЯ =====================
+document.addEventListener('DOMContentLoaded', async function() {
+    // ВИНАГИ показваме началния екран
+    document.getElementById("startScreen").style.display = "flex";
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("siteContent").style.display = "none";
+    
+    setupMenu();
+    await loadAllDataFromFirebase();
+    
+    // Инициализиране на аватар preview
+    document.getElementById('newUserAvatarFile').addEventListener('change', previewNewUserAvatar);
+    
+    // Инициализиране на event listeners
+    initializeEventListeners();
+    
+    console.log("✅ Системата е заредена успешно!");
+});
+
+function initializeEventListeners() {
+    // Зареждане на фоново изображение
+    document.getElementById('bgImageUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (!file.type.startsWith('image/')) {
+            showAdminMessage("Моля, изберете изображение!", "error");
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            document.getElementById('bgImageUrl').value = event.target.result;
+            updateBackground();
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// ЗАРЕЖДАНЕ НА ВСИЧКИ ДАННИ ОТ FIREBASE
+async function loadAllDataFromFirebase() {
+    console.log("🔄 Зареждане на всички данни от Firebase...");
+    
+    if (!isOnline || !db) {
+        console.log("⚠️ Firebase не е достъпен, използвам локални данни");
+        allUsers = [...initialUsers];
+        questions = [...initialQuestions];
+        customButtons = [];
+        return;
+    }
+    
+    try {
+        // 1. Зареждане на потребители
+        await loadUsersFromFirebase();
+        
+        // 2. Зареждане на въпроси
+        await loadQuestionsFromFirebase();
+        
+        // 3. Зареждане на съдържание
+        await loadContentFromFirebase();
+        
+        // 4. Зареждане на качени файлове
+        await loadUploadedFilesFromFirebase();
+        
+        // 5. Зареждане на бутони
+        await loadButtonsFromFirebase();
+        
+        // 6. Зареждане на резюмета
+        await loadSummariesFromFirebase();
+        
+        console.log("✅ Всички данни са заредени успешно!");
+        
+        // Показваме случаен въпрос
+        displayRandomQuestion();
+        
+    } catch (error) {
+        console.error("❌ Грешка при зареждане от Firebase:", error);
+        console.log("⚠️ Използвам локални данни поради грешка");
+        allUsers = [...initialUsers];
+        questions = [...initialQuestions];
+        customButtons = [];
+        displayRandomQuestion();
+    }
+}
+
+// Зареждане на потребители от Firebase
+async function loadUsersFromFirebase() {
+    try {
+        const usersSnapshot = await db.collection('users').get();
+        
+        if (!usersSnapshot.empty) {
+            console.log(`📋 Намерени ${usersSnapshot.size} потребители във Firebase`);
+            allUsers = [];
+            usersSnapshot.forEach(doc => {
+                const userData = doc.data();
+                
+                if (!userData.name) {
+                    userData.name = doc.id;
+                }
+                
+                userData.firebaseId = doc.id;
+                allUsers.push(userData);
+            });
+        } else {
+            console.log("📝 Няма потребители във Firebase, използвам начални");
+            allUsers = [...initialUsers];
+            
+            // Записваме началните във Firebase
+            try {
+                for (const user of initialUsers) {
+                    await db.collection('users').doc(user.name).set(user);
+                    console.log("💾 Записан начален потребител във Firebase:", user.name);
+                }
+            } catch (error) {
+                console.error("❌ Грешка при записване на начални потребители:", error);
+            }
+        }
+        
+        // ВИНАГИ добавяме началните потребители за сигурност
+        initialUsers.forEach(initialUser => {
+            const exists = allUsers.some(user => user.name === initialUser.name);
+            if (!exists) {
+                console.log("➕ Добавяне на липсващ начален потребител:", initialUser.name);
+                allUsers.push(initialUser);
+            }
+        });
+        
+        console.log(`👥 Общо потребители след зареждане: ${allUsers.length}`);
+        
+    } catch (error) {
+        console.error("❌ Грешка при зареждане на потребители:", error);
+        throw error;
+    }
+}
+
+// Зареждане на въпроси от Firebase
+async function loadQuestionsFromFirebase() {
+    try {
+        const questionsSnapshot = await db.collection('questions').get();
+        if (!questionsSnapshot.empty) {
+            questions = [];
+            questionsSnapshot.forEach(doc => {
+                const questionData = doc.data();
+                questions.push(questionData);
+            });
+            console.log(`❓ Въпроси заредени от Firebase: ${questions.length}`);
+        } else {
+            // Записваме началните въпроси в Firebase
+            for (const question of initialQuestions) {
+                await db.collection('questions').doc(question.id.toString()).set(question);
+                console.log("💾 Записан начален въпрос във Firebase:", question.id);
+            }
+            questions = [...initialQuestions];
+        }
+    } catch (error) {
+        console.error("❌ Грешка при зареждане на въпроси:", error);
+        questions = [...initialQuestions];
+    }
+}
+
+// Зареждане на съдържание от Firebase
+async function loadContentFromFirebase() {
+    try {
+        // Зареждане на страници
+        const pages = ['creators', 'literature', 'advice'];
+        for (const page of pages) {
+            const doc = await db.collection('pages').doc(page).get();
+            if (doc.exists) {
+                localStorage.setItem(`page_${page}`, JSON.stringify(doc.data()));
+            }
+        }
+        
+        console.log("📄 Съдържанието е заредено от Firebase");
+    } catch (error) {
+        console.error("❌ Грешка при зареждане на съдържание от Firebase:", error);
+    }
+}
+
+// Зареждане на качени файлове от Firebase
+async function loadUploadedFilesFromFirebase() {
+    try {
+        const filesSnapshot = await db.collection('uploadedFiles').get();
+        if (!filesSnapshot.empty) {
+            uploadedFiles = [];
+            filesSnapshot.forEach(doc => {
+                const fileData = doc.data();
+                uploadedFiles.push(fileData);
+            });
+            console.log(`📁 Качени файлове заредени от Firebase: ${uploadedFiles.length}`);
+        }
+    } catch (error) {
+        console.error("❌ Грешка при зареждане на качени файлове:", error);
+        uploadedFiles = [];
+    }
+}
+
+// Зареждане на бутони от Firebase
+async function loadButtonsFromFirebase() {
+    try {
+        const buttonsSnapshot = await db.collection('customButtons').get();
+        if (!buttonsSnapshot.empty) {
+            customButtons = [];
+            buttonsSnapshot.forEach(doc => {
+                const buttonData = doc.data();
+                customButtons.push(buttonData);
+            });
+            console.log(`🔘 Бутони заредени от Firebase: ${customButtons.length}`);
+            // Прилагаме бутоните в менюто
+            applyCustomButtons();
+            // Обновяваме списъка с всички бутони
+            updateAllButtonsList();
+        }
+    } catch (error) {
+        console.error("❌ Грешка при зареждане на бутони:", error);
+        customButtons = [];
+    }
+}
+
+// Зареждане на резюмета от Firebase
+async function loadSummariesFromFirebase() {
+    try {
+        const summariesSnapshot = await db.collection('summaries').get();
+        if (!summariesSnapshot.empty) {
+            // Зареждаме в localStorage за бърз достъп
+            summariesSnapshot.forEach(doc => {
+                const summaryData = doc.data();
+                localStorage.setItem(`summary_${doc.id}`, JSON.stringify(summaryData));
+            });
+            console.log(`📚 Резюмета заредени от Firebase: ${summariesSnapshot.size}`);
+        } else {
+            // Записваме началните резюмета в Firebase
+            for (const [lessonId, summary] of Object.entries(initialSummaries)) {
+                await db.collection('summaries').doc(lessonId).set(summary);
+                console.log("💾 Записано начално резюме във Firebase:", lessonId);
+            }
+        }
+    } catch (error) {
+        console.error("❌ Грешка при зареждане на резюмета:", error);
+    }
+}
+
+// ===================== СЛУЧАЕН ВЪПРОС =====================
+function getRandomQuestion() {
+    if (questions.length === 0) {
+        return {
+            id: 1,
+            text: "При откриването на коя сграда княз Фердинанд е освиркан от студенти?",
+            answer: "народния театър"
+        };
+    }
+    
+    const randomIndex = Math.floor(Math.random() * questions.length);
+    return questions[randomIndex];
+}
+
+function displayRandomQuestion() {
+    currentQuestion = getRandomQuestion();
+    
+    const questionElement = document.getElementById('questionText');
+    if (questionElement) {
+        questionElement.textContent = currentQuestion.text;
+    }
+    
+    const answerInput = document.getElementById('answer');
+    if (answerInput) {
+        answerInput.value = "";
+        answerInput.style.borderColor = "";
+        answerInput.style.backgroundColor = "";
+    }
+    
+    console.log("📝 Текущ въпрос:", currentQuestion.text);
+}
+
+// ===================== МЕНЮ ЛОГИКА =====================
+const sidebar = document.getElementById('sidebar');
+const menuBtn = document.getElementById('menu-btn');
+menuBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('active');
+});
+
+// Затваряне на менюто при клик извън него
+document.addEventListener('click', (e) => {
+    if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+        sidebar.classList.remove('active');
+    }
+});
+
+function setupMenu() {
+    // Нищо не се променя, менюто вече е в HTML
+}
+
+function toggleSubmenu(id) {
+    const submenu = document.getElementById(id);
+    if (submenu.style.display === "block") {
+        submenu.style.display = "none";
+    } else {
+        submenu.style.display = "block";
+    }
+}
+
+// ===================== НАВИГАЦИОННИ ФУНКЦИИ =====================
+function showHome() {
+    hideAllSections();
+    document.getElementById('main-content').style.display = 'block';
+    sidebar.classList.remove('active');
+    
+    displayRandomQuestion();
+}
+
+function hideAllSections() {
+    const sections = ['main-content', 'literature', 'advice', 'creators', 'summary-container', 'iframe-container', 'adminPanel'];
+    sections.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.style.display = 'none';
+    });
+}
+
+function showIframe(page) {
+    hideAllSections();
+    const iframeContainer = document.getElementById('iframe-container');
+    const iframe = document.getElementById('iframe');
+    iframeContainer.style.display = 'block';
+    
+    // Определяне типа на файла и избор на подходящ viewer
+    const fileExtension = page.split('.').pop().toLowerCase();
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
+        // Изображения
+        iframe.src = page;
+    } else if (fileExtension === 'pdf') {
+        // PDF файлове - Google Docs viewer
+        iframe.src = `https://docs.google.com/gview?url=${encodeURIComponent(page)}&embedded=true`;
+    } else if (['doc', 'docx'].includes(fileExtension)) {
+        // Word файлове - Microsoft Office Online
+        iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(page)}`;
+    } else if (['ppt', 'pptx'].includes(fileExtension)) {
+        // PowerPoint файлове - Microsoft Office Online
+        iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(page)}`;
+    } else if (['txt', 'html', 'htm', 'css', 'js', 'json'].includes(fileExtension)) {
+        // Текстови файлове
+        iframe.src = page;
+    } else {
+        // Всичко останало (включително URL адреси)
+        iframe.src = page;
+    }
+    
+    sidebar.classList.remove('active');
+}
+
+function openEFrame(url) {
+    showIframe(url);
+}
+
+// Функция за показване на резюмета
+function showSummary(lessonId) {
+    hideAllSections();
+    const container = document.getElementById('summary-container');
+    const grid = document.getElementById('summary-grid');
+    const title = document.getElementById('summary-title');
+    
+    container.style.display = 'block';
+    grid.innerHTML = '';
+    
+    // Зареждане на резюметата от localStorage или Firebase
+    const savedSummary = localStorage.getItem(`summary_${lessonId}`);
+    let summary;
+    
+    if (savedSummary) {
+        summary = JSON.parse(savedSummary);
+    } else {
+        // Дефолтни стойности
+        summary = {
+            title: `Резюме на Урок ${lessonId.replace('les', '')}`,
+            boxes: [
+                { title: "Част 1", content: "Съдържание...", image: "" },
+                { title: "Част 2", content: "Съдържание...", image: "" },
+                { title: "Част 3", content: "Съдържание...", image: "" },
+                { title: "Част 4", content: "Съдържание...", image: "" },
+                { title: "Част 5", content: "Съдържание...", image: "" },
+                { title: "Част 6", content: "Съдържание...", image: "" }
+            ]
+        };
+    }
+    
+    title.textContent = summary.title;
+    
+    // Създаване на 6 квадратчета
+    summary.boxes.forEach((box, index) => {
+        const boxElement = document.createElement('div');
+        boxElement.className = 'summary-box';
+        boxElement.innerHTML = `
+            <div class="summary-box-header">${box.title || `Част ${index + 1}`}</div>
+            <div class="summary-box-content">${box.content || 'Няма съдържание'}</div>
+            ${box.image ? `<img src="${box.image}" alt="Изображение" class="summary-box-image">` : ''}
+        `;
+        grid.appendChild(boxElement);
+    });
+    
+    sidebar.classList.remove('active');
+}
+
+function showLiterature() {
+    hideAllSections();
+    const literatureDiv = document.getElementById('literature');
+    literatureDiv.style.display = 'block';
+    
+    const savedContent = localStorage.getItem('page_literature');
+    if (savedContent) {
+        const contentData = JSON.parse(savedContent);
+        literatureDiv.innerHTML = contentData.html || literatureDiv.innerHTML;
+    }
+    
+    sidebar.classList.remove('active');
+}
+
+function showAdvice() {
+    hideAllSections();
+    const adviceDiv = document.getElementById('advice');
+    adviceDiv.style.display = 'block';
+    
+    const savedContent = localStorage.getItem('page_advice');
+    if (savedContent) {
+        const contentData = JSON.parse(savedContent);
+        adviceDiv.innerHTML = contentData.html || adviceDiv.innerHTML;
+    }
+    
+    sidebar.classList.remove('active');
+}
+
+function showCreators() {
+    hideAllSections();
+    const creatorsDiv = document.getElementById('creators');
+    creatorsDiv.style.display = 'block';
+    
+    const savedContent = localStorage.getItem('page_creators');
+    if (savedContent) {
+        const contentData = JSON.parse(savedContent);
+        creatorsDiv.innerHTML = contentData.html || creatorsDiv.innerHTML;
+    }
+    
+    sidebar.classList.remove('active');
+}
+
+function checkAnswer() {
+    if (!currentQuestion) {
+        displayRandomQuestion();
+        return;
+    }
+    
+    const input = document.getElementById('answer');
+    const userAnswer = input.value.trim().toLowerCase();
+    const correctAnswer = currentQuestion.answer.toLowerCase();
+    
+    if (userAnswer === correctAnswer) {
+        input.style.borderColor = "green";
+        input.style.backgroundColor = "#003300";
+        showMessage("✅ Правилен отговор!", "success");
+        
+        setTimeout(() => {
+            displayRandomQuestion();
+            input.value = "";
+            input.style.borderColor = "";
+            input.style.backgroundColor = "";
+        }, 2000);
+    } else {
+        input.style.borderColor = "red";
+        input.style.backgroundColor = "#330000";
+        showMessage("❌ Грешен отговор. Опитай отново!", "error");
+    }
+}
+
+function showMessage(message, type) {
+    const msg = document.createElement('div');
+    msg.textContent = message;
+    msg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background: ${type === 'success' ? '#006400' : '#8b0000'};
+        color: white;
+        border-radius: 5px;
+        z-index: 3000;
+    `;
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
+}
+
+// ===================== ЛОГИН СИСТЕМА =====================
+function showLogin() {
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("loginForm").style.display = "flex";
+}
+
+function setRole(role) {
+    selectedRole = role;
+    document.getElementById("btnTeacher").classList.remove("active");
+    document.getElementById("btnStudent").classList.remove("active");
+    if (role === "Учител") {
+        document.getElementById("btnTeacher").classList.add("active");
+    } else {
+        document.getElementById("btnStudent").classList.add("active");
+    }
+}
+
+function login() {
+    const name = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value.trim();
+    const error = document.getElementById("error");
+    error.textContent = "";
+
+    if (!name || !pass) {
+        error.textContent = "Моля, попълнете всички полета!";
+        return;
+    }
+
+    if (selectedRole === "") {
+        error.textContent = "Моля, изберете роля!";
+        return;
+    }
+
+    // Търсене на потребител
+    let user = allUsers.find(u => {
+        return (u.name && u.name.toLowerCase() === name.toLowerCase()) ||
+               (u.displayName && u.displayName.toLowerCase() === name.toLowerCase()) ||
+               (u.name && u.name.toLowerCase().includes(name.toLowerCase()));
+    });
+    
+    if (!user) {
+        error.textContent = "Сгрешено потребителско име!";
+        return;
+    }
+    
+    if (user.password !== pass) {
+        error.textContent = "Сгрешена парола!";
+        return;
+    }
+    
+    if (user.role !== selectedRole) {
+        error.textContent = "Сгрешен статут!";
+        return;
+    }
+
+    // Успешен вход
+    currentUser = JSON.parse(JSON.stringify(user));
+    
+    // Обновяване на профилната снимка
+    document.getElementById("profile-avatar").src = currentUser.avatar || "default.jpg";
+    
+    // Скриване на логин формата и показване на сайта
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("siteContent").style.display = "block";
+    
+    // Показване на администраторския панел
+    if (currentUser.isAdmin) {
+        document.getElementById("adminPanel").style.display = "block";
+        loadAdminData();
+    } else {
+        document.getElementById("adminPanel").style.display = "none";
+    }
+    
+    applyTeacherPermissions();
+    showMessage(`Добре дошли, ${currentUser.displayName || currentUser.name}!`, "success");
+    
+    // Показване на случаен въпрос
+    displayRandomQuestion();
+}
+
+function applyTeacherPermissions() {
+    const isTeacher = currentUser && currentUser.role === "Учител";
+    document.querySelectorAll(".teacherOnly").forEach(btn => {
+        btn.style.display = isTeacher ? "block" : "none";
+    });
+}
+
+// ===================== АДМИНИСТРАТОРСКИ ФУНКЦИИ =====================
+function loadAdminData() {
+    updateUserManagement();
+    updateQuestionsList();
+    updateFileList();
+    updateAllButtonsList();
+    updateProfileSelect();
+}
+
+function switchAdminTab(tabId) {
+    document.querySelectorAll('.admin-tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    document.getElementById(`admin-${tabId}`).classList.add('active');
+    event.currentTarget.classList.add('active');
+}
+
+// ===================== УПРАВЛЕНИЕ НА БУТОНИ =====================
+// Прилагане на качените бутони в менюто
+function applyCustomButtons() {
+    const sidebar = document.getElementById('sidebar');
+    
+    // Премахване само на добавените бутони
+    const oldCustomButtons = sidebar.querySelectorAll('.custom-button');
+    oldCustomButtons.forEach(button => button.remove());
+    
+    // Сортиране по позиция
+    customButtons.sort((a, b) => (a.position || 999) - (b.position || 999));
+    
+    // Добавяне на всеки бутон
+    customButtons.forEach(buttonData => {
+        createButtonFromData(buttonData);
+    });
+}
+
+// Създаване на бутон от данни
+function createButtonFromData(buttonData) {
+    const button = document.createElement('button');
+    button.textContent = buttonData.name;
+    button.className = 'custom-button';
+    button.dataset.id = buttonData.id;
+    button.dataset.type = 'custom';
+    
+    // Определяне на стила според типа
+    if (buttonData.type === 'main') {
+        button.classList.add('new-button');
+        
+        // Добавяне в основното меню на правилната позиция
+        const sidebar = document.getElementById('sidebar');
+        const usersButton = document.getElementById('usersButton');
+        
+        if (buttonData.position && buttonData.position > 0) {
+            const mainButtons = Array.from(sidebar.querySelectorAll('button:not(.submenu button)'));
+            const targetPosition = Math.min(buttonData.position - 1, mainButtons.length - 1);
+            
+            if (targetPosition >= 0 && targetPosition < mainButtons.length) {
+                const referenceButton = mainButtons[targetPosition];
+                sidebar.insertBefore(button, referenceButton);
+            } else {
+                sidebar.insertBefore(button, usersButton);
+            }
+        } else {
+            sidebar.insertBefore(button, usersButton);
+        }
+    } else {
+        // Добавяне в подменю
+        const submenu = document.getElementById(buttonData.parentMenu);
+        if (submenu) {
+            if (buttonData.position && buttonData.position > 0) {
+                const subButtons = Array.from(submenu.querySelectorAll('button'));
+                const targetPosition = Math.min(buttonData.position - 1, subButtons.length);
+                
+                if (targetPosition >= 0 && targetPosition < subButtons.length) {
+                    const referenceButton = subButtons[targetPosition];
+                    submenu.insertBefore(button, referenceButton);
+                } else {
+                    submenu.appendChild(button);
+                }
+            } else {
+                submenu.appendChild(button);
+            }
+        }
+    }
+    
+    // Добавяне на функционалност
+    if (buttonData.linkType === 'url') {
+        button.onclick = () => showIframe(buttonData.link);
+    } else if (buttonData.linkType === 'file') {
+        button.onclick = () => {
+            if (buttonData.fileType === 'pdf') {
+                showIframe(`https://docs.google.com/gview?url=${encodeURIComponent(buttonData.link)}&embedded=true`);
+            } else if (buttonData.fileType === 'word') {
+                showIframe(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(buttonData.link)}`);
+            } else if (buttonData.fileType === 'ppt') {
+                showIframe(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(buttonData.link)}`);
+            } else {
+                showIframe(buttonData.link);
+            }
+        };
+    } else {
+        button.onclick = () => showMessage("Този бутон няма зададен линк!", "warning");
+    }
+    
+    return button;
+}
+
+// Обновяване на списъка с ВСИЧКИ бутони
+function updateAllButtonsList() {
+    const container = document.getElementById('allButtonsList');
+    container.innerHTML = '';
+    
+    // Събираме всички бутони от менюто
+    const sidebar = document.getElementById('sidebar');
+    const allButtons = [];
+    
+    // Събиране на всички бутони (включително подменюта)
+    const collectButtons = (element, level = 0) => {
+        const buttons = element.querySelectorAll('button');
+        buttons.forEach(button => {
+            if (button.id !== 'menu-btn' && button.id !== 'profile-btn') {
+                allButtons.push({
+                    element: button,
+                    text: button.textContent,
+                    level: level,
+                    isCustom: button.classList.contains('custom-button'),
+                    customId: button.dataset.id
+                });
+            }
+        });
+        
+        // Рекурсивно събиране от подменюта
+        const submenus = element.querySelectorAll('.submenu');
+        submenus.forEach(submenu => {
+            collectButtons(submenu, level + 1);
+        });
+    };
+    
+    collectButtons(sidebar);
+    
+    // Показване на всички бутони
+    allButtons.forEach((btn, index) => {
+        const div = document.createElement('div');
+        div.className = 'button-item';
+        
+        const indent = '&nbsp;'.repeat(btn.level * 4);
+        const typeBadge = btn.isCustom ? '<span style="color: #3498db; font-size: 0.8em;">[Добавен]</span>' : '<span style="color: #aaa; font-size: 0.8em;">[Оригинален]</span>';
+        
+        div.innerHTML = `
+            <div class="button-header">
+                <div class="button-title">${indent}${btn.text}</div>
+                <div class="button-actions">
+                    ${typeBadge}
+                    ${btn.isCustom ? `<button class="admin-btn danger" onclick="deleteCustomButton('${btn.customId}')">Изтрий</button>` : ''}
+                    <button class="admin-btn secondary" onclick="editButton(${index})">Редактирай</button>
+                </div>
+            </div>
+            <div class="button-info">
+                ${btn.isCustom ? 'Добавен бутон' : 'Оригинален бутон'} | Ниво: ${btn.level}
+            </div>
+        `;
+        
+        container.appendChild(div);
+    });
+}
+
+// Редактиране на бутон
+function editButton(index) {
+    const container = document.getElementById('allButtonsList');
+    const buttons = container.querySelectorAll('.button-item');
+    
+    if (index < buttons.length) {
+        const buttonItem = buttons[index];
+        const buttonText = buttonItem.querySelector('.button-title').textContent.trim();
+        
+        // Създаваме модален прозорец за редактиране
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        `;
+        
+        modal.innerHTML = `
+            <div style="background: #1a1a1a; padding: 20px; border-radius: 10px; width: 500px; max-width: 90%;">
+                <h3 style="color: #b22222; margin-top: 0;">Редактиране на бутон</h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="color: white; display: block; margin-bottom: 5px;">Име на бутона:</label>
+                    <input type="text" id="editButtonName" value="${buttonText}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="color: white; display: block; margin-bottom: 5px;">Нов линк (оставете празно за без промяна):</label>
+                    <input type="text" id="editButtonLink" placeholder="https://..." style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="admin-btn" onclick="saveButtonEdit(${index})">Запази</button>
+                    <button class="admin-btn danger" onclick="this.closest('div[style*=\"position: fixed\"]').remove()">Откажи</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+}
+
+function saveButtonEdit(index) {
+    const modal = document.querySelector('div[style*="position: fixed"]');
+    const newName = document.getElementById('editButtonName').value.trim();
+    const newLink = document.getElementById('editButtonLink').value.trim();
+    
+    if (!newName) {
+        showAdminMessage("Името не може да бъде празно!", "error");
+        return;
+    }
+    
+    // Намиране на бутона в DOM
+    const sidebar = document.getElementById('sidebar');
+    const allButtons = Array.from(sidebar.querySelectorAll('button:not(#menu-btn):not(#profile-btn)'));
+    
+    if (index < allButtons.length) {
+        const button = allButtons[index];
+        button.textContent = newName;
+        
+        if (newLink) {
+            button.onclick = () => showIframe(newLink);
+        }
+        
+        showAdminMessage("Бутонът е редактиран успешно!", "success");
+    }
+    
+    modal.remove();
+    updateAllButtonsList();
+}
+
+async function addButtonAsLink() {
+    const name = document.getElementById('newButtonName').value.trim();
+    const type = document.getElementById('buttonType').value;
+    const parent = document.getElementById('parentMenu').value;
+    const link = document.getElementById('buttonLink').value.trim();
+    const position = document.getElementById('buttonPosition').value;
+    
+    if (!name) {
+        showAdminMessage("Въведете име на бутона!", "error");
+        return;
+    }
+    
+    if (type === 'sub' && !parent) {
+        showAdminMessage("За подбутон изберете родителско меню!", "error");
+        return;
+    }
+    
+    const buttonData = {
+        id: 'btn_' + Date.now(),
+        name: name,
+        type: type,
+        parentMenu: parent,
+        link: link,
+        linkType: 'url',
+        position: position ? parseInt(position) : null,
+        createdAt: new Date().toISOString(),
+        createdBy: currentUser ? currentUser.name : 'Unknown'
+    };
+    
+    customButtons.push(buttonData);
+    createButtonFromData(buttonData);
+    
+    if (isOnline && db) {
+        try {
+            await db.collection('customButtons').doc(buttonData.id).set(buttonData);
+            console.log("✅ Бутон запазен във Firebase:", buttonData.id);
+            showAdminMessage(`Бутон "${name}" е добавен успешно!`, "success");
+        } catch (error) {
+            console.error("❌ Грешка при запазване на бутон:", error);
+            showAdminMessage("Бутонът е добавен локално, но има грешка при запазване във Firebase", "warning");
+        }
+    } else {
+        showAdminMessage(`Бутон "${name}" е добавен локално!`, "success");
+    }
+    
+    updateAllButtonsList();
+    
+    // Изчистване на полетата
+    document.getElementById('newButtonName').value = '';
+    document.getElementById('buttonLink').value = '';
+    document.getElementById('buttonPosition').value = '';
+}
+
+async function addButtonAsFile() {
+    const fileInput = document.getElementById('buttonFile');
+    if (!fileInput.files.length) {
+        showAdminMessage("Моля, изберете файл!", "error");
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const name = document.getElementById('newButtonName').value.trim() || file.name.replace(/\.[^/.]+$/, "");
+    const type = document.getElementById('buttonType').value;
+    const parent = document.getElementById('parentMenu').value;
+    const position = document.getElementById('buttonPosition').value;
+    
+    let fileUrl = '';
+    let fileType = 'other';
+    
+    // Определяне типа на файла
+    if (file.name.toLowerCase().endsWith('.pdf')) fileType = 'pdf';
+    else if (file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx')) fileType = 'word';
+    else if (file.name.toLowerCase().endsWith('.ppt') || file.name.toLowerCase().endsWith('.pptx')) fileType = 'ppt';
+    else if (file.type.startsWith('image/')) fileType = 'image';
+    else if (file.type.startsWith('text/')) fileType = 'text';
+    
+    if (isOnline && storage) {
+        try {
+            const storageRef = storage.ref();
+            const fileRef = storageRef.child(`uploads/${Date.now()}_${file.name}`);
+            await fileRef.put(file);
+            fileUrl = await fileRef.getDownloadURL();
+            console.log("✅ Файл качен във Firebase Storage:", fileUrl);
+        } catch (error) {
+            console.error("❌ Грешка при качване на файл:", error);
+            showAdminMessage("Грешка при качване на файл!", "error");
+            return;
+        }
+    } else {
+        fileUrl = URL.createObjectURL(file);
+    }
+    
+    const buttonData = {
+        id: 'btn_' + Date.now(),
+        name: name,
+        type: type,
+        parentMenu: parent,
+        link: fileUrl,
+        linkType: 'file',
+        fileType: fileType,
+        fileName: file.name,
+        position: position ? parseInt(position) : null,
+        createdAt: new Date().toISOString(),
+        createdBy: currentUser ? currentUser.name : 'Unknown'
+    };
+    
+    customButtons.push(buttonData);
+    createButtonFromData(buttonData);
+    
+    if (isOnline && db) {
+        try {
+            await db.collection('customButtons').doc(buttonData.id).set(buttonData);
+            console.log("✅ Бутон с файл запазен във Firebase:", buttonData.id);
+            showAdminMessage(`Бутон "${name}" с файл е добавен успешно!`, "success");
+        } catch (error) {
+            console.error("❌ Грешка при запазване на бутон:", error);
+            showAdminMessage("Бутонът е добавен локално, но има грешка при запазване във Firebase", "warning");
+        }
+    } else {
+        showAdminMessage(`Бутон "${name}" с файл е добавен локално!`, "success");
+    }
+    
+    updateAllButtonsList();
+    
+    // Изчистване на полетата
+    document.getElementById('newButtonName').value = '';
+    document.getElementById('buttonFile').value = '';
+    document.getElementById('buttonPosition').value = '';
+}
+
+async function deleteCustomButton(buttonId) {
+    if (confirm("Сигурни ли сте, че искате да изтриете този бутон?")) {
+        const index = customButtons.findIndex(btn => btn.id === buttonId);
+        if (index !== -1) {
+            customButtons.splice(index, 1);
+        }
+        
+        const button = document.querySelector(`.custom-button[data-id="${buttonId}"]`);
+        if (button) {
+            button.remove();
+        }
+        
+        if (isOnline && db) {
+            try {
+                await db.collection('customButtons').doc(buttonId).delete();
+                console.log("✅ Бутон изтрит от Firebase:", buttonId);
+                showAdminMessage("Бутонът е изтрит успешно!", "success");
+            } catch (error) {
+                console.error("❌ Грешка при изтриване на бутон:", error);
+                showAdminMessage("Бутонът е изтрит локално, но има грешка при изтриване от Firebase", "warning");
+            }
+        } else {
+            showAdminMessage("Бутонът е изтрит локално!", "success");
+        }
+        
+        updateAllButtonsList();
+    }
+}
+
+async function deleteAllCustomButtons() {
+    if (confirm("СИГУРНИ ЛИ СТЕ? Това ще изтрие ВСИЧКИ добавени бутони!")) {
+        const customButtonsElements = document.querySelectorAll('.custom-button');
+        customButtonsElements.forEach(button => button.remove());
+        
+        if (isOnline && db) {
+            try {
+                const batch = db.batch();
+                const snapshot = await db.collection('customButtons').get();
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                console.log("✅ Всички добавени бутони изтрити от Firebase");
+            } catch (error) {
+                console.error("❌ Грешка при изтриване на бутони:", error);
+            }
+        }
+        
+        customButtons = [];
+        showAdminMessage("Всички добавени бутони са изтрити!", "success");
+        updateAllButtonsList();
+    }
+}
+
+function refreshButtonsList() {
+    updateAllButtonsList();
+    showAdminMessage("Списъкът с бутони е обновен!", "success");
+}
+
+// ===================== УПРАВЛЕНИЕ НА РЕЗЮМЕТА (6 квадратчета) =====================
+function loadSummaryForEdit() {
+    const lessonId = document.getElementById('lessonSelect').value;
+    if (!lessonId) {
+        showAdminMessage("Моля, изберете урок!", "error");
+        return;
+    }
+    
+    currentSummary = lessonId;
+    const editorContainer = document.getElementById('summary-editor-container');
+    const boxesEditor = document.getElementById('summary-boxes-editor');
+    
+    editorContainer.style.display = 'block';
+    boxesEditor.innerHTML = '';
+    
+    // Зареждане на съществуващи данни
+    const savedSummary = localStorage.getItem(`summary_${lessonId}`);
+    let summaryData;
+    
+    if (savedSummary) {
+        summaryData = JSON.parse(savedSummary);
+    } else {
+        summaryData = {
+            title: `Резюме на Урок ${lessonId.replace('les', '')}`,
+            boxes: Array(6).fill().map((_, i) => ({
+                title: `Част ${i + 1}`,
+                content: '',
+                image: ''
+            }))
+        };
+    }
+    
+    // Заглавие на урока
+    boxesEditor.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <label style="color: white; display: block; margin-bottom: 5px;">Заглавие на урока:</label>
+            <input type="text" id="summary-title-input" value="${summaryData.title}" style="width: 100%; padding: 10px; background: #222; color: white; border: 1px solid #444; border-radius: 5px; font-size: 1.2em;">
+        </div>
+    `;
+    
+    // Създаване на 6 редактора за квадратчетата
+    summaryData.boxes.forEach((box, index) => {
+        const boxEditor = document.createElement('div');
+        boxEditor.className = 'summary-box-editor';
+        boxEditor.innerHTML = `
+            <h4>🔲 Квадрат ${index + 1}</h4>
+            <div style="margin-bottom: 10px;">
+                <label style="color: white; display: block; margin-bottom: 5px;">Заглавие:</label>
+                <input type="text" id="box-title-${index}" value="${box.title}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label style="color: white; display: block; margin-bottom: 5px;">Съдържание:</label>
+                <textarea id="box-content-${index}" rows="4" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">${box.content}</textarea>
+            </div>
+            <div class="image-upload-container">
+                <label style="color: white; display: block; margin-bottom: 5px;">Изображение:</label>
+                <input type="file" id="box-image-file-${index}" accept="image/*" style="display: none;" onchange="previewSummaryImage(${index}, event)">
+                <button class="admin-btn secondary" onclick="document.getElementById('box-image-file-${index}').click()">Избери изображение</button>
+                <input type="text" id="box-image-url-${index}" placeholder="URL на изображение" value="${box.image}" style="flex: 1; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">
+            </div>
+            <div id="box-image-preview-${index}" style="margin-top: 10px; display: ${box.image ? 'block' : 'none'};">
+                <img src="${box.image}" alt="Preview" class="image-preview" id="box-preview-img-${index}">
+            </div>
+        `;
+        boxesEditor.appendChild(boxEditor);
+    });
+}
+
+function previewSummaryImage(boxIndex, event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+        showAdminMessage("Моля, изберете изображение!", "error");
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const previewId = `box-preview-img-${boxIndex}`;
+        const previewContainer = document.getElementById(`box-image-preview-${boxIndex}`);
+        const previewImg = document.getElementById(previewId);
+        const urlInput = document.getElementById(`box-image-url-${boxIndex}`);
+        
+        if (previewImg) {
+            previewImg.src = e.target.result;
+        }
+        
+        if (previewContainer) {
+            previewContainer.style.display = 'block';
+        }
+        
+        if (urlInput) {
+            urlInput.value = e.target.result;
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+async function saveSummary() {
+    if (!currentSummary) {
+        showAdminMessage("Моля, изберете урок първо!", "error");
+        return;
+    }
+    
+    const title = document.getElementById('summary-title-input').value.trim();
+    const boxes = [];
+    
+    // Събиране на данни от 6-те квадратчета
+    for (let i = 0; i < 6; i++) {
+        const boxTitle = document.getElementById(`box-title-${i}`).value.trim();
+        const boxContent = document.getElementById(`box-content-${i}`).value.trim();
+        const boxImage = document.getElementById(`box-image-url-${i}`).value.trim();
+        
+        boxes.push({
+            title: boxTitle || `Част ${i + 1}`,
+            content: boxContent,
+            image: boxImage
+        });
+    }
+    
+    const summaryData = {
+        title: title,
+        boxes: boxes,
+        updatedAt: new Date().toISOString(),
+        updatedBy: currentUser ? currentUser.name : 'Unknown'
+    };
+    
+    // Запазване в localStorage
+    localStorage.setItem(`summary_${currentSummary}`, JSON.stringify(summaryData));
+    
+    // Запазване във Firebase
+    if (isOnline && db) {
+        try {
+            await db.collection('summaries').doc(currentSummary).set(summaryData, { merge: true });
+            console.log("✅ Резюмета запазени във Firebase:", currentSummary);
+            showAdminMessage("Резюметата са запазени успешно във Firebase!", "success");
+        } catch (error) {
+            console.error("❌ Грешка при запазване на резюмета:", error);
+            showAdminMessage("Резюметата са запазени локално, но има грешка при запазване във Firebase", "warning");
+        }
+    } else {
+        showAdminMessage("Резюметата са запазени локално!", "success");
+    }
+    
+    previewSummary();
+}
+
+function previewSummary() {
+    if (!currentSummary) return;
+    
+    const previewContainer = document.getElementById('summary-preview-container');
+    const previewGrid = document.getElementById('summary-preview-grid');
+    
+    previewContainer.style.display = 'block';
+    previewGrid.innerHTML = '';
+    
+    // Зареждане на данните
+    const savedSummary = localStorage.getItem(`summary_${currentSummary}`);
+    if (!savedSummary) return;
+    
+    const summaryData = JSON.parse(savedSummary);
+    
+    // Създаване на преглед
+    summaryData.boxes.forEach((box, index) => {
+        const boxElement = document.createElement('div');
+        boxElement.className = 'summary-box';
+        boxElement.innerHTML = `
+            <div class="summary-box-header">${box.title || `Част ${index + 1}`}</div>
+            <div class="summary-box-content">${box.content || 'Няма съдържание'}</div>
+            ${box.image ? `<img src="${box.image}" alt="Изображение" class="summary-box-image">` : ''}
+        `;
+        previewGrid.appendChild(boxElement);
+    });
+    
+    // Скролване до прегледа
+    previewContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearSummary() {
+    if (confirm("Сигурни ли сте, че искате да изчистите всички данни за това резюме?")) {
+        for (let i = 0; i < 6; i++) {
+            const titleInput = document.getElementById(`box-title-${i}`);
+            const contentInput = document.getElementById(`box-content-${i}`);
+            const imageInput = document.getElementById(`box-image-url-${i}`);
+            const previewContainer = document.getElementById(`box-image-preview-${i}`);
+            
+            if (titleInput) titleInput.value = `Част ${i + 1}`;
+            if (contentInput) contentInput.value = '';
+            if (imageInput) imageInput.value = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+        }
+        
+        showAdminMessage("Всички полета са изчистени!", "success");
+    }
+}
+
+// ===================== УПРАВЛЕНИЕ НА ФАЙЛОВЕ =====================
+async function uploadFiles() {
+    const fileInput = document.getElementById('fileUpload');
+    if (!fileInput.files.length) {
+        showAdminMessage("Моля, изберете файлове!", "error");
+        return;
+    }
+    
+    const files = Array.from(fileInput.files);
+    let uploadedCount = 0;
+    
+    for (const file of files) {
+        let fileUrl = '';
+        
+        // Качване във Firebase Storage
+        if (isOnline && storage) {
+            try {
+                const storageRef = storage.ref();
+                const fileRef = storageRef.child(`uploads/${Date.now()}_${file.name}`);
+                await fileRef.put(file);
+                fileUrl = await fileRef.getDownloadURL();
+                uploadedCount++;
+                console.log("✅ Файл качен:", file.name);
+                
+                // Определяне типа на файла
+                let fileType = 'other';
+                if (file.name.toLowerCase().endsWith('.pdf')) fileType = 'pdf';
+                else if (file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx')) fileType = 'word';
+                else if (file.name.toLowerCase().endsWith('.ppt') || file.name.toLowerCase().endsWith('.pptx')) fileType = 'ppt';
+                else if (file.type.startsWith('image/')) fileType = 'image';
+                else if (file.type.startsWith('text/')) fileType = 'text';
+                
+                // Записване в базата данни
+                const fileData = {
+                    name: file.name,
+                    url: fileUrl,
+                    type: fileType,
+                    size: file.size,
+                    uploadedAt: new Date().toISOString(),
+                    uploadedBy: currentUser ? currentUser.name : 'Unknown'
+                };
+                
+                await db.collection('uploadedFiles').doc(Date.now().toString()).set(fileData);
+                uploadedFiles.push(fileData);
+                
+            } catch (error) {
+                console.error("❌ Грешка при качване на файл:", file.name, error);
+            }
+        } else {
+            // Локално запазване
+            fileUrl = URL.createObjectURL(file);
+            
+            let fileType = 'other';
+            if (file.name.toLowerCase().endsWith('.pdf')) fileType = 'pdf';
+            else if (file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx')) fileType = 'word';
+            else if (file.name.toLowerCase().endsWith('.ppt') || file.name.toLowerCase().endsWith('.pptx')) fileType = 'ppt';
+            else if (file.type.startsWith('image/')) fileType = 'image';
+            else if (file.type.startsWith('text/')) fileType = 'text';
+            
+            uploadedFiles.push({
+                name: file.name,
+                url: fileUrl,
+                type: fileType,
+                size: file.size
+            });
+            uploadedCount++;
+        }
+    }
+    
+    showAdminMessage(`${uploadedCount} файла са качени успешно!`, "success");
+    updateFileList();
+    fileInput.value = '';
+}
+
+async function addFileFromUrl() {
+    const url = document.getElementById('fileUrl').value.trim();
+    if (!url) {
+        showAdminMessage("Моля, въведете URL!", "error");
+        return;
+    }
+    
+    const fileName = url.split('/').pop() || 'Файл от URL';
+    const fileData = {
+        name: fileName,
+        url: url,
+        type: 'url',
+        size: 'N/A',
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: currentUser ? currentUser.name : 'Unknown'
+    };
+    
+    uploadedFiles.push(fileData);
+    
+    if (isOnline && db) {
+        try {
+            await db.collection('uploadedFiles').doc(Date.now().toString()).set(fileData);
+            console.log("✅ Файл от URL запазен във Firebase:", fileName);
+        } catch (error) {
+            console.error("❌ Грешка при запазване на файл:", error);
+        }
+    }
+    
+    showAdminMessage(`Файл от URL е добавен успешно!`, "success");
+    updateFileList();
+    document.getElementById('fileUrl').value = '';
+}
+
+function updateFileList() {
+    const fileList = document.getElementById('fileList');
+    fileList.innerHTML = '';
+    
+    uploadedFiles.forEach((file, index) => {
+        // Определяне на badge според типа
+        let badge = '';
+        switch(file.type) {
+            case 'pdf': badge = '<span class="file-type-badge badge-pdf">PDF</span>'; break;
+            case 'word': badge = '<span class="file-type-badge badge-word">WORD</span>'; break;
+            case 'ppt': badge = '<span class="file-type-badge badge-ppt">PPT</span>'; break;
+            case 'image': badge = '<span class="file-type-badge badge-image">IMG</span>'; break;
+            case 'text': badge = '<span class="file-type-badge badge-text">TXT</span>'; break;
+            case 'url': badge = '<span class="file-type-badge badge-url">URL</span>'; break;
+            default: badge = '<span class="file-type-badge">FILE</span>';
+        }
+        
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.innerHTML = `
+            <span style="cursor: pointer; color: #4CAF50;" onclick="showIframe('${file.url}')">
+                ${file.name} ${badge}
+            </span>
+            <button class="admin-btn danger" onclick="deleteFile(${index})">Изтрий</button>
+        `;
+        fileList.appendChild(div);
+    });
+}
+
+async function deleteFile(index) {
+    const file = uploadedFiles[index];
+    if (!file) return;
+    
+    uploadedFiles.splice(index, 1);
+    
+    if (isOnline && db && file.uploadedAt) {
+        try {
+            // Намиране на документа по timestamp
+            const snapshot = await db.collection('uploadedFiles')
+                .where('uploadedAt', '==', file.uploadedAt)
+                .get();
+            
+            snapshot.forEach(doc => {
+                doc.ref.delete();
+                console.log("✅ Файл изтрит от Firebase:", file.name);
+            });
+        } catch (error) {
+            console.error("❌ Грешка при изтриване на файл:", error);
+        }
+    }
+    
+    updateFileList();
+    showAdminMessage("Файлът е изтрит!", "success");
+}
+
+async function clearAllFiles() {
+    if (confirm("Сигурни ли сте, че искате да изтриете всички файлове?")) {
+        if (isOnline && db) {
+            try {
+                const batch = db.batch();
+                const snapshot = await db.collection('uploadedFiles').get();
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                console.log("✅ Всички файлове изтрити от Firebase");
+            } catch (error) {
+                console.error("❌ Грешка при изтриване на файлове:", error);
+            }
+        }
+        
+        uploadedFiles = [];
+        updateFileList();
+        showAdminMessage("Всички файлове са изтрити!", "success");
+    }
+}
+
+// ===================== УПРАВЛЕНИЕ НА ПОТРЕБИТЕЛИ =====================
+function previewNewUserAvatar(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+        showAdminMessage("Моля, изберете изображение!", "error");
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('newUserAvatarPreview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function addNewUser() {
+    const name = document.getElementById('newUserName').value.trim();
+    const displayName = document.getElementById('newUserDisplayName').value.trim();
+    const password = document.getElementById('newUserPassword').value.trim();
+    const role = document.getElementById('newUserRole').value;
+    const avatarUrl = document.getElementById('newUserAvatarUrl').value.trim();
+    const bio = document.getElementById('newUserBio').value.trim();
+    const isAdmin = document.getElementById('newUserIsAdmin').checked;
+    const avatarFile = document.getElementById('newUserAvatarFile').files[0];
+    
+    if (!name || !password) {
+        showAdminMessage("Моля, попълнете име и парола!", "error");
+        return;
+    }
+    
+    const existingUser = allUsers.find(u => u.name === name);
+    if (existingUser) {
+        showAdminMessage("Потребител с това име вече съществува!", "error");
+        return;
+    }
+    
+    let avatar = 'default.jpg';
+    
+    if (avatarFile) {
+        try {
+            const storageRef = storage.ref();
+            const avatarRef = storageRef.child(`avatars/${name}_${Date.now()}`);
+            await avatarRef.put(avatarFile);
+            avatar = await avatarRef.getDownloadURL();
+            console.log("✅ Аватар качен в Firebase Storage:", avatar);
+        } catch (error) {
+            console.error("❌ Грешка при качване на аватар:", error);
+            showAdminMessage("Грешка при качване на аватар!", "warning");
+        }
+    } else if (avatarUrl) {
+        avatar = avatarUrl;
+    }
+    
+    const newUser = {
+        name: name,
+        displayName: displayName || name,
+        role: role,
+        password: password,
+        avatar: avatar,
+        bio: bio,
+        isAdmin: isAdmin,
+        createdAt: new Date().toISOString()
+    };
+    
+    allUsers.push(newUser);
+    
+    if (isOnline && db) {
+        try {
+            await db.collection('users').doc(name).set(newUser);
+            console.log("✅ Потребител запазен във Firebase:", name);
+            showAdminMessage(`Потребител ${name} е добавен успешно!`, "success");
+        } catch (error) {
+            console.error("❌ Грешка при запазване във Firebase:", error);
+            showAdminMessage(`Потребител ${name} е добавен, но има грешка при запазване във Firebase!`, "warning");
+        }
+    } else {
+        showAdminMessage(`Потребител ${name} е добавен само локално!`, "success");
+    }
+    
+    updateUserManagement();
+    
+    document.getElementById('newUserName').value = '';
+    document.getElementById('newUserDisplayName').value = '';
+    document.getElementById('newUserPassword').value = '';
+    document.getElementById('newUserAvatarUrl').value = '';
+    document.getElementById('newUserBio').value = '';
+    document.getElementById('newUserIsAdmin').checked = false;
+    document.getElementById('newUserAvatarPreview').src = 'default.jpg';
+    document.getElementById('newUserAvatarFile').value = '';
+}
+
+function updateUserManagement() {
+    const userManagement = document.getElementById('userManagement');
+    userManagement.innerHTML = '';
+    
+    allUsers.forEach((user, index) => {
+        const div = document.createElement('div');
+        div.className = 'user-item';
+        div.innerHTML = `
+            <div class="user-info">
+                <strong>${user.name}</strong> (${user.role})
+                <div style="font-size: 12px; color: #aaa;">
+                    ${user.displayName} | ${user.isAdmin ? 'Администратор' : 'Обикновен потребител'}
+                </div>
+            </div>
+            <div class="user-actions">
+                <input type="checkbox" id="user-${index}" value="${index}">
+                <button class="admin-btn danger" onclick="deleteUser(${index})">Изтрий</button>
+                <button class="admin-btn secondary" onclick="editUser(${index})">Редактирай</button>
+            </div>
+        `;
+        userManagement.appendChild(div);
+    });
+}
+
+function updateProfileSelect() {
+    const profileSelect = document.getElementById('profileSelect');
+    if (profileSelect) {
+        profileSelect.innerHTML = '<option value="">Избери потребител</option>';
+        allUsers.forEach((user, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = `${user.name} (${user.role})`;
+            profileSelect.appendChild(option);
+        });
+    }
+}
+
+async function deleteUser(index) {
+    const user = allUsers[index];
+    
+    if (user.name === "Тодоров, Божидар") {
+        showAdminMessage("Не можете да изтриете главния администратор!", "error");
+        return;
+    }
+    
+    if (confirm(`Сигурни ли сте, че искате да изтриете ${user.name}?`)) {
+        allUsers.splice(index, 1);
+        
+        if (isOnline && db) {
+            try {
+                await db.collection('users').doc(user.name).delete();
+                console.log("✅ Потребител изтрит от Firebase:", user.name);
+                showAdminMessage("Потребителят е изтрит от Firebase!", "success");
+            } catch (error) {
+                console.error("❌ Грешка при изтриване от Firebase:", error);
+                showAdminMessage("Потребителят е изтрит само локално!", "warning");
+            }
+        } else {
+            showAdminMessage("Потребителят е изтрит локално!", "success");
+        }
+        
+        updateUserManagement();
+    }
+}
+
+async function editUser(index) {
+    const user = allUsers[index];
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 3000;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: #1a1a1a; padding: 20px; border-radius: 10px; width: 400px; max-width: 90%;">
+            <h3 style="color: #b22222; margin-top: 0;">Редактиране на потребител</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="color: white; display: block; margin-bottom: 5px;">Пълно име:</label>
+                <input type="text" id="editUserName" value="${user.name}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="color: white; display: block; margin-bottom: 5px;">Потребителско име:</label>
+                <input type="text" id="editUserDisplayName" value="${user.displayName || user.name}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="color: white; display: block; margin-bottom: 5px;">Нова парола (оставете празно за без промяна):</label>
+                <input type="password" id="editUserPassword" placeholder="Нова парола" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="color: white; display: block; margin-bottom: 5px;">Роля:</label>
+                <select id="editUserRole" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">
+                    <option value="Ученик" ${user.role === 'Ученик' ? 'selected' : ''}>Ученик</option>
+                    <option value="Учител" ${user.role === 'Учител' ? 'selected' : ''}>Учител</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="color: white; display: block; margin-bottom: 5px;">Биография:</label>
+                <textarea id="editUserBio" rows="3" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 5px;">${user.bio || ''}</textarea>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="color: white; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="editUserIsAdmin" ${user.isAdmin ? 'checked' : ''}> Администратор
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="admin-btn" onclick="saveUserEdit(${index})">Запази</button>
+                <button class="admin-btn danger" onclick="this.closest('div[style*=\"position: fixed\"]').remove()">Откажи</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+async function saveUserEdit(index) {
+    const modal = document.querySelector('div[style*="position: fixed"]');
+    const user = allUsers[index];
+    
+    const name = document.getElementById('editUserName').value.trim();
+    const displayName = document.getElementById('editUserDisplayName').value.trim();
+    const password = document.getElementById('editUserPassword').value.trim();
+    const role = document.getElementById('editUserRole').value;
+    const bio = document.getElementById('editUserBio').value.trim();
+    const isAdmin = document.getElementById('editUserIsAdmin').checked;
+    
+    if (!name) {
+        showAdminMessage("Името не може да бъде празно!", "error");
+        return;
+    }
+    
+    if (name !== user.name) {
+        const existingUser = allUsers.find(u => u.name === name && u !== user);
+        if (existingUser) {
+            showAdminMessage("Потребител с това име вече съществува!", "error");
+            return;
+        }
+    }
+    
+    user.name = name;
+    user.displayName = displayName || name;
+    user.role = role;
+    if (password) {
+        user.password = password;
+    }
+    user.bio = bio;
+    user.isAdmin = isAdmin;
+    user.updatedAt = new Date().toISOString();
+    
+    if (isOnline && db) {
+        try {
+            if (name !== user.originalName) {
+                await db.collection('users').doc(user.originalName || allUsers[index].name).delete();
+                await db.collection('users').doc(name).set(user);
+            } else {
+                await db.collection('users').doc(name).set(user, { merge: true });
+            }
+            
+            console.log("✅ Потребител обновен във Firebase:", name);
+            showAdminMessage(`Потребител ${name} е обновен успешно!`, "success");
+        } catch (error) {
+            console.error("❌ Грешка при обновяване във Firebase:", error);
+            showAdminMessage("Потребителят е обновен само локално!", "warning");
+        }
+    } else {
+        showAdminMessage("Потребителят е обновен локално!", "success");
+    }
+    
+    updateUserManagement();
+    modal.remove();
+}
+
+async function removeSelectedUsers() {
+    const selected = [];
+    allUsers.forEach((user, index) => {
+        const checkbox = document.getElementById(`user-${index}`);
+        if (checkbox && checkbox.checked && user.name !== "Тодоров, Божидар") {
+            selected.push({ index, user });
+        }
+    });
+    
+    if (selected.length === 0) {
+        showAdminMessage("Няма избрани потребители!", "error");
+        return;
+    }
+    
+    if (confirm(`Сигурни ли сте, че искате да изтриете ${selected.length} потребителя?`)) {
+        selected.sort((a, b) => b.index - a.index);
+        
+        for (const { index, user } of selected) {
+            allUsers.splice(index, 1);
+            
+            if (isOnline && db) {
+                try {
+                    await db.collection('users').doc(user.name).delete();
+                    console.log(`✅ Потребител ${user.name} изтрит от Firebase`);
+                } catch (error) {
+                    console.error("❌ Грешка при изтриване от Firebase:", error);
+                }
+            }
+        }
+        
+        updateUserManagement();
+        showAdminMessage(`${selected.length} потребителя са изтрити!`, "success");
+    }
+}
+
+async function addBulkUsers() {
+    const text = document.getElementById('bulkUsers').value.trim();
+    if (!text) {
+        showAdminMessage("Моля, въведете данни за потребители!", "error");
+        return;
+    }
+    
+    const lines = text.split('\n');
+    let added = 0;
+    
+    for (const line of lines) {
+        const parts = line.split(',').map(p => p.trim());
+        if (parts.length >= 4) {
+            const newUser = {
+                name: parts[0] + (parts[1] ? ', ' + parts[1] : ''),
+                displayName: parts[2] || parts[0],
+                password: parts[3],
+                role: parts[4] || 'Ученик',
+                avatar: parts[5] || 'default.jpg',
+                bio: parts[6] || '',
+                isAdmin: (parts[4] || 'Ученик') === 'Учител',
+                createdAt: new Date().toISOString()
+            };
+            
+            allUsers.push(newUser);
+            added++;
+            
+            if (isOnline && db) {
+                try {
+                    await db.collection('users').doc(newUser.name).set(newUser);
+                    console.log(`✅ Потребител ${newUser.name} запазен в Firebase`);
+                } catch (error) {
+                    console.error("❌ Грешка при запазване в Firebase:", error);
+                }
+            }
+        }
+    }
+    
+    if (added > 0) {
+        showAdminMessage(`${added} потребителя са добавени успешно!`, "success");
+        updateUserManagement();
+        document.getElementById('bulkUsers').value = '';
+    } else {
+        showAdminMessage("Невалиден формат на данните!", "error");
+    }
+}
+
+function generateRandomUsers() {
+    const firstNames = ["Иван", "Петър", "Георги", "Мария", "Анна", "Елена", "Николай", "Димитър", "Стоян", "Цветан"];
+    const lastNames = ["Иванов", "Петров", "Георгиев", "Димитрова", "Стоянова", "Николова", "Цветков", "Попов", "Василев", "Михов"];
+    const roles = ["Ученик", "Учител"];
+    const avatars = ["default.jpg", "avatar1.jpg", "avatar2.jpg", "avatar3.jpg"];
+    
+    let text = "";
+    for (let i = 0; i < 5; i++) {
+        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        const role = roles[Math.floor(Math.random() * roles.length)];
+        const password = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const avatar = avatars[Math.floor(Math.random() * avatars.length)];
+        
+        text += `${lastName}, ${firstName}, ${firstName} ${lastName}, ${password}, ${role}, ${avatar}, Случайно генериран потребител\n`;
+    }
+    
+    document.getElementById('bulkUsers').value = text;
+    showAdminMessage("5 случайни потребители са генерирани!", "success");
+}
+
+function exportUsers() {
+    const data = allUsers.map(user => 
+        `${user.name}, ${user.displayName}, ${user.password}, ${user.role}, ${user.isAdmin ? 'Администратор' : 'Не'}, ${user.avatar}, ${user.bio}`
+    ).join('\n');
+    
+    const blob = new Blob([data], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'потребители.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    showAdminMessage("Потребителите са експортирани!", "success");
+}
+
+// ===================== УПРАВЛЕНИЕ НА ВЪПРОСИ =====================
+function updateQuestionsList() {
+    const questionsList = document.getElementById('questionsList');
+    questionsList.innerHTML = '';
+    
+    questions.forEach((q, index) => {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding: 10px; border-bottom: 1px solid #333; margin: 5px 0;';
+        div.innerHTML = `
+            <strong>${q.text}</strong>
+            <div style="color: #4CAF50; font-size: 14px;">Отговор: ${q.answer}</div>
+            <button class="admin-btn danger" onclick="deleteQuestion(${index})" style="margin-top: 5px;">Изтрий</button>
+        `;
+        questionsList.appendChild(div);
+    });
+}
+
+async function addNewQuestion() {
+    const text = document.getElementById('newQuestion').value.trim();
+    const answer = document.getElementById('newAnswer').value.trim();
+    
+    if (!text || !answer) {
+        showAdminMessage("Моля, попълнете въпроса и отговора!", "error");
+        return;
+    }
+    
+    const newQuestion = {
+        id: Date.now(),
+        text: text,
+        answer: answer,
+        createdAt: new Date().toISOString(),
+        createdBy: currentUser ? currentUser.name : 'Unknown'
+    };
+    
+    questions.push(newQuestion);
+    
+    if (isOnline && db) {
+        try {
+            await db.collection('questions').doc(newQuestion.id.toString()).set(newQuestion);
+            console.log("✅ Въпрос запазен в Firebase с ID:", newQuestion.id);
+            showAdminMessage("Въпросът е добавен успешно в Firebase!", "success");
+        } catch (error) {
+            console.error("❌ Грешка при запазване в Firebase:", error);
+            showAdminMessage("Въпросът е добавен само локално!", "warning");
+        }
+    } else {
+        showAdminMessage("Въпросът е добавен локално!", "success");
+    }
+    
+    updateQuestionsList();
+    document.getElementById('newQuestion').value = '';
+    document.getElementById('newAnswer').value = '';
+}
+
+async function deleteQuestion(index) {
+    if (confirm("Сигурни ли сте, че искате да изтриете този въпрос?")) {
+        const question = questions[index];
+        
+        questions.splice(index, 1);
+        
+        if (isOnline && db && question.id) {
+            try {
+                await db.collection('questions').doc(question.id.toString()).delete();
+                console.log("✅ Въпрос изтрит от Firebase:", question.id);
+            } catch (error) {
+                console.error("❌ Грешка при изтриване от Firebase:", error);
+            }
+        }
+        
+        updateQuestionsList();
+        showAdminMessage("Въпросът е изтрит!", "success");
+    }
+}
+
+// ===================== УПРАВЛЕНИЕ НА СТИЛОВЕ =====================
+function updateColors() {
+    const buttonColor = document.getElementById('buttonColor').value;
+    const hoverColor = document.getElementById('buttonHoverColor').value;
+    const borderColor = document.getElementById('borderColor').value;
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        nav button { background-color: ${buttonColor} !important; }
+        nav button:hover { background-color: ${hoverColor} !important; }
+        nav { border-color: ${borderColor} !important; }
+        .admin-section { border-color: ${borderColor} !important; }
+        .summary-box { border-color: ${borderColor} !important; }
+    `;
+    document.head.appendChild(style);
+    
+    showAdminMessage("Цветовете са обновени!", "success");
+}
+
+function updateBackground() {
+    const url = document.getElementById('bgImageUrl').value.trim();
+    if (url) {
+        document.getElementById('main-content').style.backgroundImage = `url('${url}')`;
+        showAdminMessage("Фонът е обновен!", "success");
+    }
+}
+
+function updateFont() {
+    const font = document.getElementById('fontFamily').value;
+    document.body.style.fontFamily = font;
+    showAdminMessage(`Шрифтът е променен на ${font}!`, "success");
+}
+
+// ===================== РЕДАКТОРСКИ ФУНКЦИИ =====================
+function loadCreatorsContent() {
+    const creatorsDiv = document.getElementById('creators');
+    const content = creatorsDiv.innerHTML;
+    document.getElementById('creatorsContent').value = content;
+    showAdminMessage("Текущото съдържание е заредено!", "success");
+}
+
+async function saveCreatorsContent() {
+    const content = document.getElementById('creatorsContent').value.trim();
+    
+    if (!content) {
+        showAdminMessage("Моля, въведете съдържание!", "error");
+        return;
+    }
+    
+    const pageData = {
+        id: 'creators',
+        html: content,
+        updatedAt: new Date().toISOString(),
+        updatedBy: currentUser ? currentUser.name : 'Unknown'
+    };
+    
+    localStorage.setItem('page_creators', JSON.stringify(pageData));
+    
+    if (isOnline && db) {
+        try {
+            await db.collection('pages').doc('creators').set(pageData, { merge: true });
+            console.log("✅ Страница 'За създателите' запазена в Firebase");
+            showAdminMessage("Страницата е запазена успешно в Firebase!", "success");
+        } catch (error) {
+            console.error("❌ Грешка при запазване в Firebase:", error);
+            showAdminMessage("Страницата е запазена локално, но има грешка при запазване в Firebase", "warning");
+        }
+    } else {
+        showAdminMessage("Страницата е запазена локално!", "success");
+    }
+}
+
+function loadLiteratureContent() {
+    const literatureDiv = document.getElementById('literature');
+    const content = literatureDiv.innerHTML;
+    document.getElementById('literatureContent').value = content;
+    showAdminMessage("Текущото съдържание е заредено!", "success");
+}
+
+async function saveLiteratureContent() {
+    const content = document.getElementById('literatureContent').value.trim();
+    
+    if (!content) {
+        showAdminMessage("Моля, въведете съдържание!", "error");
+        return;
+    }
+    
+    const pageData = {
+        id: 'literature',
+        html: content,
+        updatedAt: new Date().toISOString(),
+        updatedBy: currentUser ? currentUser.name : 'Unknown'
+    };
+    
+    localStorage.setItem('page_literature', JSON.stringify(pageData));
+    
+    if (isOnline && db) {
+        try {
+            await db.collection('pages').doc('literature').set(pageData, { merge: true });
+            console.log("✅ Страница 'Препоръчителна литература' запазена в Firebase");
+            showAdminMessage("Страницата е запазена успешно в Firebase!", "success");
+        } catch (error) {
+            console.error("❌ Грешка при запазване в Firebase:", error);
+            showAdminMessage("Страницата е запазена локално, но има грешка при запазване в Firebase", "warning");
+        }
+    } else {
+        showAdminMessage("Страницата е запазена локално!", "success");
+    }
+}
+
+function loadAdviceContent() {
+    const adviceDiv = document.getElementById('advice');
+    const content = adviceDiv.innerHTML;
+    document.getElementById('adviceContent').value = content;
+    showAdminMessage("Текущото съдържание е заредено!", "success");
+}
+
+async function saveAdviceContent() {
+    const content = document.getElementById('adviceContent').value.trim();
+    
+    if (!content) {
+        showAdminMessage("Моля, въведете съдържание!", "error");
+        return;
+    }
+    
+    const pageData = {
+        id: 'advice',
+        html: content,
+        updatedAt: new Date().toISOString(),
+        updatedBy: currentUser ? currentUser.name : 'Unknown'
+    };
+    
+    localStorage.setItem('page_advice', JSON.stringify(pageData));
+    
+    if (isOnline && db) {
+        try {
+            await db.collection('pages').doc('advice').set(pageData, { merge: true });
+            console.log("✅ Страница 'Съвети за олимпиадата' запазена в Firebase");
+            showAdminMessage("Страницата е запазена успешно в Firebase!", "success");
+        } catch (error) {
+            console.error("❌ Грешка при запазване в Firebase:", error);
+            showAdminMessage("Страницата е запазена локално, но има грешка при запазване в Firebase", "warning");
+        }
+    } else {
+        showAdminMessage("Страницата е запазена локално!", "success");
+    }
+}
+
+// ===================== СПЕЦИАЛНИ ФУНКЦИИ =====================
+function loadAnswers7() {
+    if (currentUser && currentUser.role === "Учител") {
+        showIframe('О1.jpg');
+        setTimeout(() => {
+            showMessage("Отговорите са достъпни само за учители!", "success");
+        }, 500);
+    } else {
+        showMessage("Нямате права за тази функция!", "error");
+    }
+}
+
+// ===================== FIREBASE ПОПРАВКИ =====================
+async function fixFirebaseUsers() {
+    if (!isOnline || !db) {
+        showAdminMessage("Няма връзка с Firebase!", "error");
+        return;
+    }
+    
+    if (confirm("Това ще поправи структурата на потребителите във Firebase. Продължавате ли?")) {
+        try {
+            let savedCount = 0;
+            for (const user of allUsers) {
+                if (user.name) {
+                    await db.collection('users').doc(user.name).set(user);
+                    savedCount++;
+                    console.log("✅ Потребител запазен във Firebase:", user.name);
+                }
+            }
+            
+            showAdminMessage(`Firebase е поправен! ${savedCount} потребителя са запазени.`, "success");
+            
+        } catch (error) {
+            console.error("❌ Грешка при поправяне на Firebase:", error);
+            showAdminMessage("Грешка при поправяне на Firebase!", "error");
+        }
+    }
+}
+
+// ===================== DEBUG ФУНКЦИИ =====================
+async function checkFirebaseStructure() {
+    if (!isOnline || !db) {
+        showAdminMessage("Няма връзка с Firebase!", "error");
+        return;
+    }
+    
+    try {
+        const collections = ['users', 'pages', 'questions', 'customButtons', 'uploadedFiles', 'summaries'];
+        let structureInfo = "📊 Firebase структура:\n\n";
+        
+        for (const collection of collections) {
+            const snapshot = await db.collection(collection).get();
+            structureInfo += `📂 ${collection}: ${snapshot.size} документа\n`;
+            
+            if (snapshot.size > 0) {
+                snapshot.forEach(doc => {
+                    structureInfo += `  └─ ${doc.id}\n`;
+                });
+            }
+            structureInfo += "\n";
+        }
+        
+        document.getElementById('debugOutput').textContent = structureInfo;
+        showAdminMessage("Firebase структурата е проверена!", "success");
+        
+    } catch (error) {
+        console.error("❌ Грешка при проверка на структурата:", error);
+        document.getElementById('debugOutput').textContent = "❌ Грешка: " + error.message;
+    }
+}
+
+async function debugFirebase() {
+    console.log("=== DEBUG FIREBASE ===");
+    console.log("isOnline:", isOnline);
+    console.log("db:", db ? "Инициализиран" : "Неинициализиран");
+    
+    let debugInfo = "=== DEBUG FIREBASE ===\n\n";
+    debugInfo += `isOnline: ${isOnline}\n`;
+    debugInfo += `db: ${db ? "✅ Инициализиран" : "❌ Неинициализиран"}\n\n`;
+    
+    if (isOnline && db) {
+        try {
+            const collections = ['users', 'pages', 'questions', 'customButtons', 'uploadedFiles', 'summaries'];
+            for (const col of collections) {
+                const snapshot = await db.collection(col).get();
+                debugInfo += `${col}: ${snapshot.size} документа\n`;
+                snapshot.forEach(doc => {
+                    debugInfo += `  - ${doc.id}: ${JSON.stringify(doc.data()).substring(0, 100)}...\n`;
+                });
+                debugInfo += "\n";
+            }
+        } catch (error) {
+            console.error("❌ Debug грешка:", error);
+            debugInfo += "❌ Грешка: " + error.message + "\n";
+        }
+    }
+    
+    debugInfo += "=== ЛОКАЛНИ ДАННИ ===\n";
+    debugInfo += `Потребители: ${allUsers.length}\n`;
+    debugInfo += `Въпроси: ${questions.length}\n`;
+    debugInfo += `Бутони: ${customButtons.length}\n`;
+    debugInfo += `Файлове: ${uploadedFiles.length}\n`;
+    debugInfo += `Текущ въпрос: ${currentQuestion ? currentQuestion.text.substring(0, 50) + '...' : 'Няма'}\n`;
+    
+    document.getElementById('debugOutput').textContent = debugInfo;
+    console.log(debugInfo);
+}
+
+function clearAllLocalStorage() {
+    if (confirm("Сигурни ли сте, че искате да изчистите всички локално запазени данни?")) {
+        localStorage.clear();
+        showAdminMessage("✅ LocalStorage е изчистен!", "success");
+    }
+}
+
+async function forceSaveAllData() {
+    if (!isOnline || !db) {
+        showAdminMessage("Няма връзка с Firebase!", "error");
+        return;
+    }
+    
+    if (confirm("Това ще запази ВСИЧКИ локални данни във Firebase. Продължавате ли?")) {
+        try {
+            // 1. Запазване на потребители
+            for (const user of allUsers) {
+                await db.collection('users').doc(user.name).set(user);
+            }
+            
+            // 2. Запазване на въпроси
+            for (const question of questions) {
+                await db.collection('questions').doc(question.id.toString()).set(question);
+            }
+            
+            // 3. Запазване на бутони
+            for (const button of customButtons) {
+                await db.collection('customButtons').doc(button.id).set(button);
+            }
+            
+            // 4. Запазване на файлове
+            for (const file of uploadedFiles) {
+                await db.collection('uploadedFiles').doc(Date.now().toString()).set(file);
+            }
+            
+            // 5. Запазване на резюмета
+            const lessons = ['les1', 'les2', 'les3', 'les4', 'les5', 'les6', 'les7', 'les8', 'les9', 'les10'];
+            for (const lesson of lessons) {
+                const savedSummary = localStorage.getItem(`summary_${lesson}`);
+                if (savedSummary) {
+                    await db.collection('summaries').doc(lesson).set(JSON.parse(savedSummary));
+                }
+            }
+            
+            showAdminMessage("✅ Всички данни са запазени във Firebase!", "success");
+            
+        } catch (error) {
+            console.error("❌ Грешка при запазване на данни:", error);
+            showAdminMessage("❌ Грешка при запазване на данни!", "error");
+        }
+    }
+}
+
+// ===================== ПРОФИЛЕН ПАНЕЛ =====================
+function logout() {
+    if (confirm("Сигурни ли сте, че искате да излезете?")) {
+        currentUser = null;
+        document.getElementById("siteContent").style.display = "none";
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("startScreen").style.display = "flex";
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+        selectedRole = "";
+        document.getElementById("btnTeacher").classList.remove("active");
+        document.getElementById("btnStudent").classList.remove("active");
+        document.getElementById("profilePanel").style.display = "none";
+        showMessage("✅ Успешно излязохте от системата!", "success");
+    }
+}
+
+document.getElementById("profile-btn").onclick = () => {
+    const panel = document.getElementById("profilePanel");
+    if (!currentUser) {
+        showMessage("Моля, влезте в системата първо!", "error");
+        return;
+    }
+
+    document.getElementById("panelAvatar").src = currentUser.avatar || "default.jpg";
+    document.getElementById("panelName").textContent = currentUser.displayName || currentUser.name;
+    document.getElementById("panelRole").textContent = "Статут: " + currentUser.role;
+    document.getElementById("panelPass").textContent = "Парола: " + currentUser.password;
+    document.getElementById("panelBio").textContent = currentUser.bio || "Няма описание";
+
+    panel.style.display = panel.style.display === "block" ? "none" : "block";
+};
+
+document.addEventListener('click', (e) => {
+    const panel = document.getElementById('profilePanel');
+    const profileBtn = document.getElementById('profile-btn');
+    
+    if (panel && !panel.contains(e.target) && !profileBtn.contains(e.target)) {
+        panel.style.display = 'none';
+    }
+});
+
+function showUsers() {
+    const container = document.getElementById("userList");
+    if (currentUser && currentUser.role === "Учител") {
+        if (container.style.display === "block") {
+            container.style.display = "none";
+        } else {
+            container.innerHTML = "<h3>👥 Потребители</h3>";
+            allUsers.forEach(u => {
+                const div = document.createElement("div");
+                div.className = "user-item";
+                div.textContent = `${u.name} (${u.role})${u.isAdmin ? ' [Администратор]' : ''}`;
+                container.appendChild(div);
+            });
+            container.style.display = "block";
+        }
+    } else {
+        showMessage("Нямате права за тази функция!", "error");
+    }
+}
+
+// ===================== ПОМОЩНИ ФУНКЦИИ =====================
+function showAdminMessage(message, type) {
+    const msg = document.getElementById('adminMessage');
+    msg.textContent = message;
+    msg.className = type === 'success' ? 'admin-message-success' : 'admin-message-error';
+    msg.style.display = 'block';
+    
+    setTimeout(() => {
+        msg.style.display = 'none';
+    }, 5000);
+}
+
+// Автоматично запазване при затваряне
+window.addEventListener('beforeunload', async function() {
+    if (currentUser && currentUser.isAdmin) {
+        try {
+            const saveData = {
+                users: allUsers,
+                questions: questions,
+                buttons: customButtons,
+                files: uploadedFiles,
+                lastSave: new Date().toISOString()
+            };
+            
+            localStorage.setItem('admin_backup', JSON.stringify(saveData));
+            console.log("✅ Данните са запазени преди затваряне");
+        } catch (error) {
+            console.error("❌ Грешка при запазване:", error);
+        }
+    }
+});
+
+console.log("🚀 Системата е готова за работа!");
+</script>
+
+</body>
+</html>
